@@ -1,0 +1,42 @@
+{
+  "defaultAction": "SCMP_ACT_ERRNO",
+  "archMap": [
+    { "architecture": "SCMP_ARCH_X86_64", "subArchitectures": ["SCMP_ARCH_X86", "SCMP_ARCH_X32"] },
+    { "architecture": "SCMP_ARCH_AARCH64", "subArchitectures": ["SCMP_ARCH_ARM"] }
+  ],
+  "syscalls": [
+    {
+      "names": [
+        "read", "write", "close", "fstat", "lseek", "pread64", "pwrite64",
+        "stat", "lstat", "statx", "newfstatat", "access", "faccessat", "faccessat2",
+        "getdents64", "openat", "openat2", "fchmodat", "utimensat",
+        "brk", "mmap", "mprotect", "munmap", "msync",
+        "readlink", "readlinkat", "getcwd", "chdir",
+        "fcntl", "fcntl64", "ioctl", "dup", "dup2", "dup3",
+        "clone", "clone3", "fork", "vfork", "execve", "execveat", "exit", "exit_group",
+        "wait4", "waitid", "waitpid",
+        "kill", "tgkill", "rt_sigaction", "rt_sigreturn", "rt_sigprocmask", "sigaltstack", "sigaction",
+        "ptrace",
+        "getpid", "getppid", "gettid", "getuid", "getgid", "geteuid", "getegid",
+        "getpgrp", "getpgid", "getsid", "setsid", "setpgid", "setresuid", "setresgid",
+        "uname", "sysinfo", "prlimit64",
+        "gettimeofday", "clock_gettime", "clock_getres", "clock_nanosleep", "nanosleep", "time",
+        "getrandom", "syslog",
+        "unlink", "unlinkat", "mkdirat", "renameat", "renameat2", "linkat", "symlinkat",
+        "fchownat", "fchmod", "chmod", "umask",
+        "pipe", "pipe2",
+        "getrusage", "getrlimit", "setrlimit", "prctl", "set_tid_address", "set_robust_list",
+        "futex", "futex_waitv", "epoll_create1", "epoll_ctl", "epoll_wait", "eventfd2", "eventfd",
+        "inotify_init1", "inotify_add_watch", "inotify_rm_watch", "timerfd_create", "timerfd_settime",
+        "lseek", "flock", "fsync", "fdatasync", "syncfs",
+        "membarrier", "process_vm_readv", "process_vm_writev",
+        "sched_getaffinity", "sched_setaffinity", "sched_yield",
+        "readv", "writev", "preadv", "pwritev", "preadv2", "pwritev2",
+        "select", "pselect6", "poll", "ppoll",
+        "madvise", "mlock", "munlock",
+        "get_robust_list", "rseq", "s23935440"
+      ],
+      "action": "SCMP_ACT_ALLOW"
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+[
+  {
+    "task_id": "synthetic-bugfix/range_util",
+    "task_type": "bug_fix",
+    "repository_snapshot_id": "fixtures-bugs-range-util",
+    "prompt": "`benchmarks/fixtures/bugs/range_util_buggy.py` contains two seeded bugs.\n\nBug 1: `clamp` returns 0 for clamp(5, 0, 3) but must return 3, and returns 3 for clamp(-1, 0, 3) but must return 0.\nBug 2: `chunk([1,2,3,4,5], 2)` returns [[1,2]] but must return [[1,2],[3,4],[5]].\n\nRepair the file so the hidden tests pass. Provide the full corrected file content or a unified diff against the original.",
+    "expected_behavior": "clamp(5,0,3)==3; clamp(-1,0,3)==0; chunk([1,2,3,4,5],2)==[[1,2],[3,4],[5]].",
+    "allowed_tools": ["read_file", "write_file", "run_tests"],
+    "test_command": "python3 -m pytest --no-header -q .",
+    "compile_command": "python3 -m py_compile range_util.py",
+    "gold_files": ["benchmarks/fixtures/bugs/range_util.py"],
+    "gold_patch": "--- a/range_util.py\n+++ b/range_util.py\n@@ -7,12 +7,12 @@\n def clamp(value, low, high):\n-    if value < low:\n-        return high\n-    if value > high:\n-        return low\n+    if value < low:\n+        return low\n+    if value > high:\n+        return high\n@@ -18,5 +18,5 @@\n     out = []\n     for i in range(0, len(items), size):\n         out.append(items[i:i + size])\n-    return out[:size]\n+    return out",
+    "ground_truth_findings": [
+      {"file": "range_util.py", "line": 8, "kind": "comparison_reversal", "severity": "high",
+       "expected_fix": "return low when value < low, return high when value > high"},
+      {"file": "range_util.py", "line": 22, "kind": "off_by_one", "severity": "high",
+       "expected_fix": "return out (do not truncate to size chunks)"}
+    ],
+    "hidden_test": "hidden_tests/synthetic_bugfix/test_range_util.py",
+    "language": "python",
+    "timeout_seconds": 120
+  },
+  {
+    "task_id": "synthetic-bugfix/pricing_discount",
+    "task_type": "bug_fix",
+    "repository_snapshot_id": "fixtures-repos-python-inventory",
+    "prompt": "In the python-inventory fixture repository, `inventory/pricing.py` computes a discount only when the total is strictly greater than the threshold, but the spec says the boundary is inclusive (an order of exactly 10000 cents must receive the 5% discount). Fix `compute_total` without changing its signature, and keep the existing discount rules intact.",
+    "expected_behavior": "compute_total(order with total exactly 10000) == 9500.",
+    "allowed_tools": ["read_file", "write_file", "run_tests"],
+    "test_command": "python3 -m pytest -q",
+    "compile_command": null,
+    "gold_files": ["benchmarks/fixtures/repos/python-inventory/inventory/pricing.py"],
+    "gold_patch": null,
+    "ground_truth_findings": [
+      {"file": "inventory/pricing.py", "line": 20, "kind": "comparison_reversal", "severity": "medium",
+       "expected_fix": "use >= instead of > so the threshold boundary is inclusive"}
+    ],
+    "hidden_test": null,
+    "language": "python",
+    "timeout_seconds": 120
+  }
+]

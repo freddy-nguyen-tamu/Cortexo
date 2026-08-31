@@ -1,0 +1,21 @@
+[
+  {
+    "task_id": "security-review/shop",
+    "task_type": "security_review",
+    "repository_snapshot_id": "fixtures-vulnerable-shop",
+    "prompt": "Review `benchmarks/fixtures/vulnerable/shop.py`. It is a safe intentionally-vulnerable toy application. Report each vulnerability with: CWE-id category, 1-based line number, severity (HIGH/MEDIUM/LOW), and the specific expected fix. Only report findings supported by this file.",
+    "expected_behavior": "Exactly three findings: (1) SQL injection in search_products, line ~24, CWE-89, HIGH, expected fix: parameterized query; (2) path traversal in read_invoice, line ~31, CWE-22, HIGH, expected fix: resolve symlinks and reject paths outside base_dir; (3) authz omission in get_invoice, line ~40, CWE-862, MEDIUM, expected fix: require invoice to belong to user_id. (Report of weak getToken entropy is optional.)",
+    "allowed_tools": ["read_file"],
+    "test_command": null,
+    "compile_command": null,
+    "gold_files": [],
+    "gold_patch": null,
+    "ground_truth_findings": [
+      {"file": "shop.py", "line": 24, "kind": "sql_injection", "cwe": "CWE-89", "severity": "high", "expected_fix": "parameterized query"},
+      {"file": "shop.py", "line": 31, "kind": "path_traversal", "cwe": "CWE-22", "severity": "high", "expected_fix": "resolve + allowlist under base_dir"},
+      {"file": "shop.py", "line": 40, "kind": "authz_omission", "cwe": "CWE-862", "severity": "medium", "expected_fix": "ownership check via user_id"}
+    ],
+    "language": "python",
+    "timeout_seconds": 120
+  }
+]

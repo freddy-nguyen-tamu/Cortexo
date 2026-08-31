@@ -1,0 +1,29 @@
+name: scratch-9m-code
+seed: 42
+
+model:
+  vocab_size: 16384
+  max_seq_len: 512
+  n_layers: 6
+  d_model: 256
+  n_heads: 8
+  n_kv_heads: 8
+  d_ff: 1024
+  dropout: 0.0
+  rope_theta: 10000.0
+  rms_norm_eps: 0.00001
+  tie_embeddings: true
+  use_bias: false
+
+training:
+  micro_batch_size: 4
+  gradient_accumulation_steps: 16
+  learning_rate: 0.0005
+  min_learning_rate: 0.00005
+  warmup_steps: 500
+  max_steps: 10000
+  weight_decay: 0.1
+  grad_clip: 1.0
+  precision: fp16
+  save_every: 250
+  eval_every: 125

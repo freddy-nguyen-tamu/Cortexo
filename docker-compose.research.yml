@@ -1,0 +1,20 @@
+services:
+
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: cortexo_mysql
+      MYSQL_USER: cortexo
+      MYSQL_PASSWORD: cortexo
+    ports:
+      - "3306:3306"
+
+  cassandra:
+    image: cassandra:5
+    ports:
+      - "9042:9042"
+
+  # Add SQL Server Express, Oracle Database Free, and Db2 separately after
+  # verifying their current official container/runtime instructions.
+  # Put them behind Compose profiles because they are resource-heavy.

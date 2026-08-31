@@ -1,0 +1,91 @@
+name: benchmark-smoke
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+
+  benchmark-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install package
+        run: |
+          cd ml
+          python -m pip install --upgrade pip
+          pip install -e .
+
+      - name: Validate benchmark task files parse
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          tasks_root = Path("benchmarks/tasks")
+          total = 0
+          for f in sorted(tasks_root.glob("*.json")):
+              tasks = json.loads(f.read_text())
+              for t in tasks:
+                  assert t["task_id"], f.key()
+                  assert "prompt" in t and "expected_behavior" in t
+              total += len(tasks)
+              print(f"{f.name}: {len(tasks)} tasks")
+          assert total >= 10, f"expected >= 10 tasks, got {total}"
+          print("total tasks:", total)
+          PY
+
+      - name: Smoke run - one synthetic repo, two tiny tasks, placeholder model
+        run: |
+          cd ml
+          python - <<'PY'
+          from pathlib import Path
+          import tempfile, json
+          from cortexo_ml.repository.ingest import ingest_repository
+          from cortexo_ml.retrieval.context_builder import RepositoryIndex
+          from cortexo_ml.serving.backends import EchoBackend
+          from cortexo_ml.serving.model_interface import GenerationConfig
+          from cortexo_ml.evaluation.runner import run_evaluation
+          import os
+
+          tasks = json.loads(Path("../benchmarks/tasks/micro-codegen.json").read_text())
+          assert len(tasks) >= 2, "need at least 2 micro-codegen tasks"
+          backend = EchoBackend(model_id="echo-demo")
+          results = []
+          for task in tasks[:2]:
+              record = run_evaluation(
+                  task=task,
+                  model_variant_id="echo-demo",
+                  prompt_fn=lambda p, b=backend: b.generate(p, GenerationConfig(temperature=0.2)).text,
+                  seed=42,
+              )
+              results.append(record)
+          print(f"smoke evaluations done: {len(results)}")
+
+          demo = Path(tempfile.mkdtemp()) / "repo"
+          (demo / "src").mkdir(parents=True)
+          (demo / "src" / "core.py").write_text("def add(a, b): return a + b\n")
+          result = ingest_repository("smoke-repo", demo, snapshot_id="smoke-snap")
+          index = RepositoryIndex.from_ingest(result)
+          ctx = index.search("where is add?", max_tokens=1024)
+          assert ctx.chunks, "retrieval returned no chunks"
+          print("ingest+retrieval smoke ok:", result.stats["fileCount"], "files")
+          PY
+
+      - name: Sandbox policy unit smoke (docker not required)
+        run: |
+          python3 - <<'PY'
+          import sys
+          sys.path.insert(0, "sandbox")
+          from policy import evaluate_request
+          assert evaluate_request({"workspaceId": "w1", "commandType": "TEST", "language": "python"}).allowed
+          assert not evaluate_request({"workspaceId": "w1", "command": "rm -rf /", "commandType": "TEST", "language": "python"}).allowed
+          print("sandbox policy smoke ok")
+          PY
+
+# No GPU, no training, no model downloads. Pure offline validation.

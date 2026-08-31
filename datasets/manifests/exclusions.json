@@ -1,0 +1,83 @@
+{
+  "version": "1",
+  "updatedAt": "2026-01-01T00:00:00Z",
+  "neverInclude": {
+    "benchmarkSolutions": true,
+    "hiddenTests": true,
+    "benchmarkTargetPatches": true,
+    "explanation": "Solutions, hidden tests and target patches inside benchmarks/ must never be mixed into any training corpus. benchmarks/ is separated from datasets/ and excluded by path in the collect pipeline."
+  },
+  "paths": [
+    "benchmarks",
+    "datasets/benchmark",
+    "artifacts",
+    "sandbox",
+    "notebooks",
+    "docs",
+    "tests"
+  ],
+  "filePatterns": [
+    "*.pem",
+    "*.key",
+    "*.p12",
+    "*.p8",
+    "*.pfx",
+    "id_rsa",
+    "id_ed25519",
+    "credentials*",
+    ".env",
+    ".env.*",
+    "*.env",
+    ".npmrc",
+    "*.jks",
+    "*.keystore",
+    "*.truststore"
+  ],
+  "directories": [
+    "node_modules",
+    "vendor",
+    "venv",
+    ".venv",
+    "build",
+    "dist",
+    "target",
+    "out",
+    ".git",
+    ".mvn",
+    ".gradle",
+    "caches"
+  ],
+  "binaryExtensions": [
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".gif",
+    ".ico",
+    ".pdf",
+    ".zip",
+    ".gz",
+    ".tar",
+    ".jar",
+    ".class",
+    ".so",
+    ".dylib",
+    ".dll",
+    ".exe",
+    ".bin",
+    ".pyc",
+    ".pkl",
+    ".safetensors",
+    ".bin",
+    ".onnx",
+    ".woff",
+    ".woff2",
+    ".ttf"
+  ],
+  "secretPatternNote": "Before indexing or training, always run the secret scanner (ml/src/cortexo_ml/common/secrets.py). Any hit blocks the file unless the match is redacted and the file is manually reviewed.",
+  "highRiskIfIncluded": [
+    "tests/ containing benchmark answers",
+    "any file with a decoded secret",
+    "proprietary or restricted texts",
+    "closed-license repositories"
+  ]
+}

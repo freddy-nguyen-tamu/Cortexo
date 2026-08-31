@@ -1,0 +1,38 @@
+[
+  {
+    "task_id": "code-review/range_util",
+    "task_type": "code_review",
+    "repository_snapshot_id": "fixtures-bugs-range-util",
+    "prompt": "Review `benchmarks/fixtures/bugs/range_util_buggy.py`. Report each bug with the file, an accurate 1-based line number, a category (comparison_reversal, off_by_one, illegal_catch, resource_leak, etc.), and severity. Be precise; report only findings you can support from the code. Do not invent unrelated issues.",
+    "expected_behavior": "Two supported findings: (1) clamp returns the wrong bound when value is below low / above high, line ~8-9, comparison_reversal, HIGH; (2) chunk truncates the output to `size` chunks, line ~22, off_by_one, HIGH.",
+    "allowed_tools": ["read_file"],
+    "test_command": null,
+    "compile_command": null,
+    "gold_files": [],
+    "gold_patch": null,
+    "ground_truth_findings": [
+      {"file": "range_util.py", "line": 8, "kind": "comparison_reversal", "severity": "high"},
+      {"file": "range_util.py", "line": 22, "kind": "off_by_one", "severity": "high"}
+    ],
+    "language": "python",
+    "timeout_seconds": 120
+  },
+  {
+    "task_id": "code-review/checkout",
+    "task_type": "code_review",
+    "repository_snapshot_id": "fixtures-repos-python-inventory",
+    "prompt": "Review the `create_order` endpoint in `inventory/app.py` of the python-inventory repository. Identify issues a reviewer should block on before merge, with file, line, category and severity. Ignore style nits and naming.",
+    "expected_behavior": "At minimum: order_total reads from an in-process dict while POST /orders separately builds orders through OrderService, so totals are inconsistent (state coupling / wrong variable). Report it precisely, no invented findings.",
+    "allowed_tools": ["read_file"],
+    "test_command": null,
+    "compile_command": null,
+    "gold_files": [],
+    "gold_patch": null,
+    "ground_truth_findings": [
+      {"file": "inventory/app.py", "line": 34, "kind": "wrong_variable", "severity": "medium",
+       "expected_fix": "order_total must consult the same store used by create_order, or the endpoint is inconsistent"}
+    ],
+    "language": "python",
+    "timeout_seconds": 120
+  }
+]

@@ -1,0 +1,29 @@
+name: scratch-33m-code
+seed: 42
+
+model:
+  vocab_size: 16384
+  max_seq_len: 1024
+  n_layers: 8
+  d_model: 512
+  n_heads: 8
+  n_kv_heads: 8
+  d_ff: 2048
+  dropout: 0.0
+  rope_theta: 10000.0
+  rms_norm_eps: 0.00001
+  tie_embeddings: true
+  use_bias: false
+
+training:
+  micro_batch_size: 2
+  gradient_accumulation_steps: 16
+  learning_rate: 0.00025
+  min_learning_rate: 0.000025
+  warmup_steps: 1000
+  max_steps: 20000
+  weight_decay: 0.1
+  grad_clip: 1.0
+  precision: fp16
+  save_every: 500
+  eval_every: 250

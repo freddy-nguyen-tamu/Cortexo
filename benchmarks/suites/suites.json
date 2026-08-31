@@ -1,0 +1,55 @@
+{
+  "suites": [
+    {
+      "name": "micro-codegen",
+      "description": "Isolated function generation. Metrics: pass@1/pass@k, syntax success, compile success, hidden-test pass rate.",
+      "tasks": "tasks/micro-codegen.json"
+    },
+    {
+      "name": "synthetic-bugfix",
+      "description": "Deterministic code mutations with known correct patch. Metrics: solved/not solved, regressions, patch size, attempts, time to repair.",
+      "tasks": "tasks/synthetic-bugfix.json"
+    },
+    {
+      "name": "repo-understanding",
+      "description": "Questions derived from repository facts. Metrics: file recall@k, symbol recall@k, dependency answer accuracy, citation correctness.",
+      "tasks": "tasks/repo-understanding.json"
+    },
+    {
+      "name": "code-review",
+      "description": "Seeded correctness bugs with known findings and line-level labels. Metrics: precision, recall, F1, line localization, severity accuracy.",
+      "tasks": "tasks/code-review.json"
+    },
+    {
+      "name": "security-review",
+      "description": "Safe intentionally-vulnerable toy applications. Metrics: precision, recall, false positives, CWE accuracy.",
+      "tasks": "tasks/security-review.json"
+    },
+    {
+      "name": "polydb-swe",
+      "description": "PolyDB-SWE: enterprise database reasoning across PostgreSQL/MySQL/SQL Server/Oracle/Db2. Metrics: SQL parses, executes, expected rows, forbidden writes, dialect correctness, hallucinated schema objects, repair success.",
+      "tasks": "tasks/polydb-swe.json"
+    },
+    {
+      "name": "retrieval",
+      "description": "Query with known relevant files/symbols. Metrics: file recall@k, symbol recall@k, rank of first correct.",
+      "tasks": "tasks/retrieval.json"
+    },
+    {
+      "name": "agent-repair",
+      "description": "Tasks requiring tools through the compile/test loop. Metrics: solved, tool calls, attempts, time to repair.",
+      "tasks": "tasks/agent-repair.json"
+    },
+    {
+      "name": "context-strategy",
+      "description": "Same tasks under naive/BM25/dense/hybrid/AST/graph/compressed/long contexts. Metrics: quality, latency, tokens, memory, distractor sensitivity.",
+      "tasks": "tasks/context-strategy.json"
+    }
+  ],
+  "conventions": {
+    "task_id": "suite-name/task-name",
+    "hidden_tests": "hidden_tests/ is never added to any training corpus (see datasets/manifests/exclusions.json).",
+    "gold_patch": "gold_patches + solutions also excluded from training corpora.",
+    "fixtures": "fixtures/ contains synthetic repos, buggy files, vulnerable toy apps and dialect schema equivalents."
+  }
+}

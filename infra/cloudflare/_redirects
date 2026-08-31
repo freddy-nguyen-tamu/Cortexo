@@ -1,0 +1,2 @@
+# SPA fallback for Cloudflare Pages. Place at the web output root.
+/*  /index.html  200

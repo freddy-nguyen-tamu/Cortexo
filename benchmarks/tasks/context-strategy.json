@@ -1,0 +1,24 @@
+[
+  {
+    "task_id": "context-strategy/naive-vs-hybrid",
+    "task_type": "context_strategy",
+    "repository_snapshot_id": "fixtures-repos-python-inventory",
+    "prompt": "Same repo-understanding question run under multiple context strategies: (a) naive paste-everything, (b) BM25, (c) dense, (d) hybrid RRF, (e) AST-normalized, (f) graph-expanded, (g) compressed budget, (h) full long context. Question: 'Where is Product defined and which file builds Product instances?'",
+    "expected_behavior": "Correct answer in all strategies except possibly naive truncation. Metrics to record per strategy: quality, latency, tokens, RAM, distractor sensitivity.",
+    "strategies": ["naive", "bm25", "dense", "hybrid", "ast", "graph", "compressed", "long"],
+    "allowed_tools": ["search_symbols", "dependency_graph"],
+    "test_command": null, "compile_command": null, "gold_files": [], "gold_patch": null, "ground_truth_findings": [],
+    "language": "python", "timeout_seconds": 300
+  },
+  {
+    "task_id": "context-strategy/budget-sensitivity",
+    "task_type": "context_strategy",
+    "repository_snapshot_id": "fixtures-repos-python-inventory",
+    "prompt": "Measure retrieval quality of the hybrid pipeline on 'Which endpoint creates an order?' as the context token budget shrinks from 8192 to 512 tokens. Record quality, usedTokens, and whether the needed file remains in context.",
+    "expected_behavior": "Quality drops below ~1024 tokens; the needed file (inventory/app.py) is retained until the tightest budget where it is dropped.",
+    "strategies": ["hybrid@8192", "hybrid@4096", "hybrid@2048", "hybrid@1024", "hybrid@512"],
+    "allowed_tools": ["search_symbols", "dependency_graph"],
+    "test_command": null, "compile_command": null, "gold_files": [], "gold_patch": null, "ground_truth_findings": [],
+    "language": "python", "timeout_seconds": 300
+  }
+]

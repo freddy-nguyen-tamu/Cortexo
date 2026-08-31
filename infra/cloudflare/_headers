@@ -1,0 +1,11 @@
+# Basic security headers applied by Cloudflare Pages to the Vue app.
+# In production, VITE_API_BASE_URL should point at the API host; the browser
+# enforces CORS from SPRING_ORIGIN.
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=()
+
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable

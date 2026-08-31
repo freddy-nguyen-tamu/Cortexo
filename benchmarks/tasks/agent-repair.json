@@ -1,0 +1,34 @@
+[
+  {
+    "task_id": "agent-repair/range_util",
+    "task_type": "agent_repair",
+    "repository_snapshot_id": "fixtures-bugs-range-util",
+    "prompt": "Repair benchmarks/fixtures/bugs/range_util_buggy.py so its hidden tests pass. You may read files, write files, and run the test command. Iterate until tests pass or you determine the task is impossible.",
+    "expected_behavior": "The file passes hidden_tests/synthetic_bugfix/test_range_util.py. Both seeded bugs fixed; no regression introduced.",
+    "allowed_tools": ["read_file", "list_files", "write_file", "run_tests", "run_compile"],
+    "test_command": "python3 -m pytest --no-header -q .",
+    "compile_command": "python3 -m py_compile range_util.py",
+    "gold_files": ["benchmarks/fixtures/bugs/range_util.py"],
+    "gold_patch": null,
+    "ground_truth_findings": [
+      {"file": "range_util.py", "line": 8, "kind": "comparison_reversal", "severity": "high"},
+      {"file": "range_util.py", "line": 22, "kind": "off_by_one", "severity": "high"}
+    ],
+    "hidden_test": "hidden_tests/synthetic_bugfix/test_range_util.py",
+    "language": "python", "timeout_seconds": 300, "requiresTools": true
+  },
+  {
+    "task_id": "agent-repair/pricing_discount",
+    "task_type": "agent_repair",
+    "repository_snapshot_id": "fixtures-repos-python-inventory",
+    "prompt": "inventory/pricing.py applies its 5% discount only for totals strictly above 10000 cents; the specification requires the boundary to be inclusive. Fix compute_total so an order of exactly 10000 cents receives the 5% discount, run the repository tests, and confirm no regressions.",
+    "expected_behavior": "test_order_total_with_discount_threshold_inclusive passes and the full receive test suite stays green.",
+    "allowed_tools": ["read_file", "list_files", "write_file", "run_tests", "run_compile", "search_symbols"],
+    "test_command": "python3 -m pytest -q",
+    "compile_command": null,
+    "gold_files": ["benchmarks/fixtures/repos/python-inventory/inventory/pricing.py"],
+    "gold_patch": null,
+    "ground_truth_findings": [{"file": "inventory/pricing.py", "line": 20, "kind": "comparison_reversal", "severity": "medium", "expected_fix": "use >="}],
+    "language": "python", "timeout_seconds": 300, "requiresTools": true
+  }
+]

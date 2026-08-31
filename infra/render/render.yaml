@@ -1,0 +1,50 @@
+# Render blueprint for the Spring Boot API (blueprint section 81).
+# Reference: https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: cortexo-api
+    runtime: docker
+    repo: https://github.com/your-org/Cortexo
+    dockerfilePath: apps/api-spring/Dockerfile
+    dockerContext: apps/api-spring
+    region: oregon
+    plan: free
+    envVars:
+      - key: PORT
+        value: 8080
+      - key: JWT_SECRET
+        generateValue: true
+      - key: MONGODB_URI
+        fromDatabase:
+          name: cortexo-mongo
+          property: connectionString
+      - key: POSTGRES_URL
+        fromDatabase:
+          name: cortexo-eval
+          property: connectionString
+      - key: POSTGRES_USER
+        fromDatabase:
+          name: cortexo-eval
+          property: user
+      - key: POSTGRES_PASSWORD
+        fromDatabase:
+          name: cortexo-eval
+          property: password
+      - key: ML_GATEWAY_URL
+        value: https://cortexo-ml.onrender.com
+      - key: FRONTEND_ORIGIN
+        value: https://cortexo.pages.dev
+      - key: MONGODB_DATABASE
+        value: cortexo
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+    healthCheckPath: /api/health
+
+databases:
+  - name: cortexo-eval
+    plan: free
+    databaseName: cortexo_eval
+    user: cortexo
+
+# MongoDB Atlas is external (free M0 cluster); set MONGODB_URI manually in the
+# Render dashboard. Free web services may sleep; acceptable for a portfolio demo.

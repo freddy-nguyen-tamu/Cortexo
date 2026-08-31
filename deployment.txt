@@ -1,0 +1,172 @@
+INIT
+cd /home/projects/Cortexo && \
+docker compose -f docker-compose.core.yml up -d && \
+( docker compose -f docker-compose.research.yml up -d 2>/dev/null || true ) && \
+MONGO_ID=$(docker compose -f docker-compose.core.yml ps -q mongodb) && \
+PG_ID=$(docker compose -f docker-compose.core.yml ps -q postgres) && \
+echo "waiting for mongo/postgres..." && \
+until docker exec "$MONGO_ID" mongosh --quiet --eval 'db.runCommand({ping:1}).ok' 2>/dev/null | grep -q 1; do sleep 2; done && \
+until docker exec "$PG_ID" pg_isready -U cortexo -d cortexo_eval 2>/dev/null | grep -q accepting; do sleep 2; done && \
+echo "seeding mongo schema + demo models..." && \
+docker exec -i "$MONGO_ID" mongosh mongodb://localhost:27017/cortexo < infra/mongo/01_create_collections.js && \
+docker exec -i "$MONGO_ID" mongosh mongodb://localhost:27017/cortexo < infra/mongo/seed_demo_models.js && \
+echo "seeding postgres eval schema..." && \
+docker exec -i "$PG_ID" psql -U cortexo -d cortexo_eval -v ON_ERROR_STOP=1 < infra/postgres/eval_schema.sql && \
+echo "creating ML venv + installing package..." && \
+python3 -m venv ml/.venv && \
+ml/.venv/bin/pip install --quiet -e ml && \
+ml/.venv/bin/pip install --quiet -r ml/requirements.txt && \
+echo "writing demo artifacts..." && \
+ml/.venv/bin/python scripts/seed_demo.py && \
+echo "building Vue frontend..." && \
+( cd apps/web-vue && npm install --no-audit --no-fund && npm run build ) && \
+echo "building Spring API (best-effort, needs mvn)..." && \
+( command -v mvn >/dev/null 2>&1 && cd apps/api-spring && mvn -q -DskipTests package || echo "mvn not found - skip Spring build (run ./mvnw/mvn later)" ) && \
+echo "building sandbox image (best-effort)..." && \
+( docker build -q -t cortexo-sandbox sandbox && echo "sandbox image built" || echo "sandbox build skipped" ) && \
+echo "INIT DONE"
+
+TESTING COMPILE
+cd /home/projects/Cortexo && \
+set -e && \
+echo "=== CONTAINERS ===" && \
+docker compose -f docker-compose.core.yml ps && \
+echo "=== PYTHON COMPILE ===" && \
+ml/.venv/bin/python -m compileall -q ml/src/cortexo_ml && \
+echo "=== PYTHON TESTS ===" && \
+ml/.venv/bin/python -m pytest -q ml/tests -ra && \
+echo "=== TINY TRANSFORMER TEST ===" && \
+ml/.venv/bin/python -m pytest -q ml/tests -m tiny_model -ra && \
+echo "=== VUE TYPECHECK ===" && \
+(cd apps/web-vue && npm run typecheck) && \
+echo "=== VUE PROD BUILD ===" && \
+(cd apps/web-vue && npm run build) && \
+echo "=== SANDBOX IMAGE ===" && \
+docker image inspect cortexo-sandbox >/dev/null && \
+echo "=== ALL CURRENT TESTS PASSED ==="
+
+TEST MAVEN WRAPPER
+cd /home/projects/Cortexo/apps/api-spring
+ls -la mvnw 2>/dev/null || true
+IF EXIST MAVEN
+chmod +x mvnw
+./mvnw clean test
+./mvnw -DskipTests package
+IF NOT EXIST MAVEN
+sudo apt update
+sudo apt install -y maven
+mvn clean test
+mvn -DskipTests package
+
+CHECK SPRING BOOT
+cd /home/projects/Cortexo/apps/api-spring && \
+echo "=== JAVA ===" && java -version && \
+echo "=== MAVEN ===" && mvn -version && \
+echo "=== SPRING TESTS ===" && mvn clean test && \
+echo "=== SPRING PACKAGE ===" && mvn -DskipTests package && \
+echo "=== SPRING BUILD PASSED ===" && \
+ls -lh target/*.jar
+
+START SPRING
+cd /home/projects/Cortexo/apps/api-spring
+mvn spring-boot:run
+
+FIX VERSION SPRINGBOOT
+sudo apt update && \
+sudo apt install -y openjdk-21-jdk && \
+echo "=== INSTALLED JDKS ===" && \
+update-java-alternatives --list && \
+echo "=== SET JAVA 21 ===" && \
+sudo update-alternatives --set java /usr/lib/jvm/java-21-openjdk-amd64/bin/java && \
+sudo update-alternatives --set javac /usr/lib/jvm/java-21-openjdk-amd64/bin/javac && \
+export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64 && \
+export PATH="$JAVA_HOME/bin:$PATH" && \
+echo "=== VERIFY JAVA ===" && \
+java -version && \
+javac -version && \
+mvn -version
+
+START ML SERVICE IN PYTHON IN SECOND TERMINAL
+cd /home/projects/Cortexo
+ml/.venv/bin/uvicorn cortexo_ml.api.main:app --host 0.0.0.0 --port 8000
+
+FIRST TERMINAL, START SPRING
+cd /home/projects/Cortexo/apps/api-spring
+mvn spring-boot:run
+
+THIRD TERMINAL, START VUE
+cd /home/projects/Cortexo/apps/web-vue
+npm run dev
+
+VERIFY STACK
+curl -s http://localhost:8000/health | python3 -m json.tool
+curl -s http://localhost:8080/api/health | python3 -m json.tool
+
+VERIFY DATABASE
+cd /home/projects/Cortexo
+
+MONGO_ID=$(docker compose -f docker-compose.core.yml ps -q mongodb)
+docker exec "$MONGO_ID" mongosh --quiet mongodb://localhost:27017/cortexo --eval '
+printjson({
+  models: db.models.countDocuments(),
+  experiments: db.experiments.countDocuments(),
+  repositories: db.repositories.countDocuments()
+})
+'
+
+PG_ID=$(docker compose -f docker-compose.core.yml ps -q postgres)
+docker exec "$PG_ID" psql -U cortexo -d cortexo_eval -c '\dt'
+
+REDIS_ID=$(docker compose -f docker-compose.core.yml ps -q redis)
+docker exec "$REDIS_ID" redis-cli ping
+
+RUN SPRING BASELINE VERSION OF 0
+cd /home/projects/Cortexo/apps/api-spring && \
+export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64 && \
+export SPRING_FLYWAY_BASELINE_ON_MIGRATE=true && \
+export SPRING_FLYWAY_BASELINE_VERSION=0 && \
+mvn spring-boot:run
+
+SMOKE TEST
+echo "=== ML HEALTH ==="
+curl -s http://localhost:8000/health | python3 -m json.tool
+
+echo "=== SPRING HEALTH ==="
+curl -s http://localhost:8080/api/health | python3 -m json.tool
+curl -s \
+  -X POST \
+  http://localhost:8080/api/inference/generate \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "requestId": "smoke-001",
+    "modelVariantId": "echo-demo",
+    "prompt": "Write a Python function that returns the sum of two integers.",
+    "seed": 42,
+    "generation": {
+      "temperature": 0,
+      "maxNewTokens": 128
+    }
+  }' | python3 -m json.tool
+
+VERIFY FLYWAY/POSTGRESQL
+cd /home/projects/Cortexo
+
+PG_ID=$(docker compose -f docker-compose.core.yml ps -q postgres)
+
+docker exec "$PG_ID" \
+  psql -U cortexo -d cortexo_eval \
+  -c '\dt'
+
+docker exec "$PG_ID" \
+  psql -U cortexo -d cortexo_eval \
+  -c 'SELECT installed_rank, version, description, success FROM flyway_schema_history ORDER BY installed_rank;'
+
+FIX STALE APPLICATION NAME
+cd /home/projects/Cortexo/apps/api-spring/src/main/java/com/cortexo/lab && \
+mv SweForgeApplication.java CortexoApplication.java && \
+sed -i 's/SweForgeApplication/CortexoApplication/g' CortexoApplication.java
+
+CLEAN TEST BEFORE FILLING IN PLACEHOLDER
+cd /home/projects/Cortexo/apps/api-spring
+mvn clean test
+

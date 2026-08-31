@@ -1,0 +1,50 @@
+[
+  {
+    "task_id": "retrieval/symbol-where",
+    "task_type": "retrieval",
+    "repository_snapshot_id": "fixtures-repos-python-inventory",
+    "prompt": "Where is Product defined and which file builds Product instances?",
+    "expected_behavior": "inventory/models.py defines Product; inventory/app.py catalog builds Product instances.",
+    "relevantFiles": ["inventory/models.py", "inventory/app.py", "inventory/orders.py"],
+    "relevantSymbols": ["Product", "OrderService"],
+    "allowed_tools": ["search_symbols", "dependency_graph"],
+    "test_command": null, "compile_command": null, "gold_files": [], "gold_patch": null, "ground_truth_findings": [],
+    "language": "python", "timeout_seconds": 120
+  },
+  {
+    "task_id": "retrieval/discount-logic",
+    "task_type": "retrieval",
+    "repository_snapshot_id": "fixtures-repos-python-inventory",
+    "prompt": "How is the order discount computed and at what threshold?",
+    "expected_behavior": "compute_total in inventory/pricing.py: 5% at 10_000 cents inclusive, 10% at 50_000.",
+    "relevantFiles": ["inventory/pricing.py", "inventory/models.py"],
+    "relevantSymbols": ["compute_total", "DiscountRule"],
+    "allowed_tools": ["search_symbols", "dependency_graph"],
+    "test_command": null, "compile_command": null, "gold_files": [], "gold_patch": null, "ground_truth_findings": [],
+    "language": "python", "timeout_seconds": 120
+  },
+  {
+    "task_id": "retrieval/endpoint-orders",
+    "task_type": "retrieval",
+    "repository_snapshot_id": "fixtures-repos-python-inventory",
+    "prompt": "Which endpoint creates an order and what does it return?",
+    "expected_behavior": "POST /orders -> create_order returns JSON with totalCents.",
+    "relevantFiles": ["inventory/app.py", "inventory/orders.py"],
+    "relevantSymbols": ["create_order", "OrderService"],
+    "allowed_tools": ["search_symbols", "dependency_graph"],
+    "test_command": null, "compile_command": null, "gold_files": [], "gold_patch": null, "ground_truth_findings": [],
+    "language": "python", "timeout_seconds": 120
+  },
+  {
+    "task_id": "retrieval/java-pricing",
+    "task_type": "retrieval",
+    "repository_snapshot_id": "fixtures-repos-java-inventory",
+    "prompt": "What does the /orders endpoint compute in the java inventory service and which repository interface backs it?",
+    "expected_behavior": "ProductController POST /orders -> OrderService.discountedTotalCents; backed by ProductRepository.",
+    "relevantFiles": ["com/demo/inventory/controller/ProductController.java", "com/demo/inventory/service/OrderService.java", "com/demo/inventory/repo/ProductRepository.java"],
+    "relevantSymbols": ["ProductController", "OrderService", "ProductRepository"],
+    "allowed_tools": ["search_symbols", "dependency_graph"],
+    "test_command": null, "compile_command": null, "gold_files": [], "gold_patch": null, "ground_truth_findings": [],
+    "language": "java", "timeout_seconds": 120
+  }
+]

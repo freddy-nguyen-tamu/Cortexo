@@ -1,0 +1,159 @@
+# ============================================================
+# Cortexo .gitignore
+# Commit authored source, tests, configs, docs and benchmarks.
+# Ignore credentials, dependencies, generated builds/data/models.
+# ============================================================
+
+# --- Secrets / credentials ---
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+id_rsa
+id_rsa.*
+id_ed25519
+id_ed25519.*
+credentials.json
+credentials*.json
+service-account*.json
+service_account*.json
+secrets.json
+secret*.json
+secret*.yml
+secret*.yaml
+
+# --- Python ---
+.venv/
+venv/
+env/
+**/.venv/
+**/venv/
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+**/.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+*.egg-info/
+.eggs/
+
+# --- Node / Vue ---
+node_modules/
+**/node_modules/
+apps/web-vue/dist/
+apps/web-vue/.vite/
+.npm/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# --- Java / Maven ---
+target/
+**/target/
+*.class
+*.jar
+*.war
+*.ear
+.mvn/timing.properties
+
+# --- Generated ML model weights / exports ---
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+*.gguf
+*.onnx
+*.tflite
+*.npy
+*.npz
+
+# --- Generated Cortexo artifacts ---
+artifacts/**
+
+# --- Generated / large datasets ---
+datasets/raw/**
+datasets/interim/**
+datasets/processed/**
+datasets/benchmark/**
+
+# Keep authored dataset manifests in Git
+!datasets/manifests/
+!datasets/manifests/**
+
+# --- Repository ingestion/runtime workspaces ---
+repos/
+**/repos/
+workspace/
+workspaces/
+sandbox/workspaces/
+sandbox/tmp/
+sandbox/runs/
+
+# --- Notebook runtime state ---
+.ipynb_checkpoints/
+**/.ipynb_checkpoints/
+
+# --- Logs / runtime files ---
+*.log
+*.pid
+*.pid.lock
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# --- Local databases / dumps ---
+*.db
+*.sqlite
+*.sqlite3
+*.dump
+*.rdb
+dump.rdb
+appendonly.aof
+
+# --- IDE / editor ---
+.idea/
+*.iml
+.vscode/
+.classpath
+.project
+.settings/
+
+# --- OS metadata ---
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- Local test / coverage / benchmark output ---
+coverage/
+reports/
+test-results/
+benchmark-results/
+perf-results/
+
+# --- Misc generated archives/binaries ---
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.7z
+*.so
+*.dll
+*.dylib
+*.exe
+
+# TypeScript incremental build cache
+*.tsbuildinfo
