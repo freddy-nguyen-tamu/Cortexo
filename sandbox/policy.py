@@ -142,8 +142,8 @@ def docker_flags(
         "--workdir", "/work",
         "--cap-drop", "ALL",
         "--security-opt", "no-new-privileges:true",
-        "--security-opt", "seccomp=sandbox/seccomp-profile.json",
         "--env", "PYTHONDONTWRITEBYTECODE=1",
+        "--env", "PYTHONPYCACHEPREFIX=/tmp/pycache",
         "--env", "HOME=/tmp",
     ]
     return flags

@@ -495,3 +495,47 @@ def test_patch_apply_failure_result_serializes():
     assert record["status"] == STATUS_PATCH_APPLY_FAIL
     assert isinstance(record["testStage"], dict)
     assert isinstance(record["durationMs"], int)
+
+
+
+def test_real_grader_workspace_is_sandbox_traversable():
+    """Sandbox UID must be able to traverse the grader's temporary workspace."""
+    import stat
+
+    class PermissionRecordingExecutor:
+        def __init__(self):
+            self.modes = []
+
+        def execute(self, command_type, language, workspace, timeout_seconds):
+            mode = stat.S_IMODE(Path(workspace).stat().st_mode)
+            self.modes.append(mode)
+
+            if command_type == "COMPILE":
+                return {
+                    "ok": True,
+                    "passed": True,
+                    "exitCode": 0,
+                    "stdout": "",
+                    "stderr": "",
+                    "durationMs": 1,
+                    "policy": False,
+                    "timedOut": False,
+                }
+
+            return {
+                "ok": True,
+                "passed": True,
+                "exitCode": 0,
+                "stdout": "4 passed in 0.01s",
+                "stderr": "",
+                "durationMs": 1,
+                "policy": False,
+                "timedOut": False,
+            }
+
+    executor = PermissionRecordingExecutor()
+    result = make_grader(executor).grade(micro_task(), GOOD_CODE)
+
+    assert result.status == STATUS_PASS
+    assert executor.modes
+    assert all(mode == 0o755 for mode in executor.modes)

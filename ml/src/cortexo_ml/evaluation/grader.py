@@ -275,9 +275,14 @@ class ExecutableGrader:
                                 candidate_kind=None, candidate_sha256=None,
                                 test_stage=self._policy_stage_from_error(str(exc)))
 
-        workspace = tempfile.mkdtemp(prefix="cortexo-grader-")
+        workspace = Path(tempfile.mkdtemp(prefix="cortexo-grader-"))
         try:
-            return self._grade_in_workspace(task, spec, candidate, Path(workspace), started)
+            # tempfile.mkdtemp() creates mode 0700. The sandbox executes as
+            # UID 10001, so it must be able to traverse/read the staged
+            # candidate and hidden tests. Files themselves remain non-writable
+            # to the sandbox user.
+            workspace.chmod(0o755)
+            return self._grade_in_workspace(task, spec, candidate, workspace, started)
         except OSError as exc:
             return GraderResult(applicable=True, passed=False, status=STATUS_WORKSPACE_ERROR,
                                 candidate_kind=candidate.kind, candidate_sha256=candidate.sha256,

@@ -343,6 +343,53 @@ rm -rf "$WS" "$REQ"; \
 
 cd /home/projects/Cortexo && ( set +e; WS="$(mktemp -d /tmp/cortexo-sandbox-smoke-XXXXXX)"; REQ="$(mktemp /tmp/cortexo-sandbox-request-XXXXXX.json)"; LOG="$(mktemp /tmp/cortexo-sandbox-smoke-XXXXXX.log)"; printf 'def add(a, b):\n    return a + b\n' > "$WS/solution.py"; chmod 755 "$WS"; chmod 644 "$WS/solution.py"; printf '%s\n' '{"workspaceId":"manual-smoke","commandType":"COMPILE","language":"python","timeoutSeconds":30}' > "$REQ"; echo "=== WORKSPACE ==="; echo "$WS"; echo "=== REQUEST ==="; cat "$REQ"; echo "=== SANDBOX OUTPUT ==="; python3 sandbox/runner.py --request-file "$REQ" --workspace "$WS" --keep-workspace 2>&1 | tee "$LOG"; RC=${PIPESTATUS[0]}; echo; echo "============================================================"; echo "SANDBOX RUNNER EXIT CODE: $RC"; echo "LOG: $LOG"; echo "WORKSPACE: $WS"; echo "============================================================"; if [ "$RC" -eq 0 ]; then echo "SANDBOX SMOKE: PASS"; rm -rf "$WS" "$REQ"; else echo "SANDBOX SMOKE: FAIL"; echo "Workspace and log preserved for debugging."; rm -f "$REQ"; fi; true )
 
+PERMISSION ISSUE TEST
+cd /home/projects/Cortexo && ( \
+WS="$(mktemp -d /tmp/cortexo-default-seccomp-XXXXXX)"; \
+printf 'def add(a, b):\n    return a + b\n' > "$WS/solution.py"; \
+chmod 755 "$WS"; \
+chmod 644 "$WS/solution.py"; \
+docker run --rm \
+  --network none \
+  --memory 1g \
+  --cpus 1 \
+  --pids-limit 128 \
+  --read-only \
+  --tmpfs /tmp:rw,noexec,nosuid,size=256m \
+  --user 10001:10001 \
+  --workdir /work \
+  --cap-drop ALL \
+  --security-opt no-new-privileges:true \
+  --env PYTHONDONTWRITEBYTECODE=1 \
+  --env PYTHONPYCACHEPREFIX=/tmp/pycache \
+  --env HOME=/tmp \
+  --volume "$WS:/work" \
+  cortexo-sandbox:latest \
+  python3 -m compileall -q .; \
+RC=$?; \
+echo "DEFAULT SECCOMP + TMP PYCACHE EXIT CODE: $RC"; \
+[ "$RC" -eq 0 ] && echo "COMPILE SMOKE: PASS" || echo "COMPILE SMOKE: FAIL"; \
+rm -rf "$WS"; \
+true \
+)
+
+CORTEXO RUNNER TEST:
+cd /home/projects/Cortexo && ( \
+WS="$(mktemp -d /tmp/cortexo-sandbox-smoke-XXXXXX)"; \
+REQ="$(mktemp /tmp/cortexo-sandbox-request-XXXXXX.json)"; \
+printf 'def add(a, b):\n    return a + b\n' > "$WS/solution.py"; \
+chmod 755 "$WS"; \
+chmod 644 "$WS/solution.py"; \
+printf '%s\n' '{"workspaceId":"manual-smoke","commandType":"COMPILE","language":"python","timeoutSeconds":30}' > "$REQ"; \
+python3 sandbox/runner.py --request-file "$REQ" --workspace "$WS" --keep-workspace; \
+RC=$?; \
+echo; \
+echo "CORTEXO RUNNER EXIT CODE: $RC"; \
+[ "$RC" -eq 0 ] && echo "CORTEXO SANDBOX: PASS" || echo "CORTEXO SANDBOX: FAIL"; \
+rm -rf "$WS" "$REQ"; \
+true \
+)
+
 
 
 
