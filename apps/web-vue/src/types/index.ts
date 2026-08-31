@@ -112,3 +112,92 @@ export interface EvaluationRunRecord {
   metrics: Record<string, unknown>;
   createdAt: string;
 }
+
+export interface RegressionScoreBucket {
+  passed: number;
+  failed: number;
+  total: number;
+  score: number;
+  percent: number;
+}
+
+export interface RegressionSummary {
+  software: RegressionScoreBucket;
+  deterministic: RegressionScoreBucket & {
+    byCategory: Record<string, RegressionScoreBucket>;
+  };
+  overall: RegressionScoreBucket;
+  requiredDeterministicScore: number;
+  passedGate: boolean;
+}
+
+export interface RegressionGit {
+  shortCommit?: string | null;
+  branch?: string | null;
+  dirty: boolean;
+}
+
+export interface RegressionCaseResult {
+  case_id: string;
+  category: string;
+  task_id: string;
+  expected_status: string;
+  actual_status: string;
+  expected_passed: boolean;
+  actual_passed: boolean;
+  matched: boolean;
+  duration_ms: number;
+  candidate_sha256: string | null;
+  changed_files: string[];
+  changed_lines: number;
+  message: string;
+}
+
+export interface RegressionCheckResult {
+  check_id: string;
+  category: string;
+  passed: boolean;
+  duration_ms: number;
+  return_code: number | null;
+}
+
+export interface RegressionChangedCase {
+  caseId: string;
+  previousMatched: boolean;
+  currentMatched: boolean;
+}
+
+export interface RegressionDelta {
+  previousOverallScore: number;
+  currentOverallScore: number;
+  scoreDelta: number;
+  changedCases: RegressionChangedCase[];
+}
+
+export interface RegressionReport {
+  available?: boolean;
+  error?: string;
+  suiteVersion?: string;
+  generatedAt?: string;
+  git?: RegressionGit;
+  summary?: RegressionSummary;
+  baselineSha256?: string;
+  cases?: RegressionCaseResult[];
+  checks?: RegressionCheckResult[];
+  delta?: RegressionDelta | null;
+}
+
+export interface RegressionReportSummary {
+  suiteVersion?: string;
+  generatedAt?: string;
+  git?: RegressionGit;
+  summary?: RegressionSummary;
+  delta?: RegressionDelta | null;
+}
+
+export interface RegressionHistory {
+  available?: boolean;
+  error?: string;
+  reports?: RegressionReportSummary[];
+  limit?: number;
+}

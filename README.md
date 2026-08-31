@@ -114,6 +114,19 @@ Canonical task object (same for every model) across suites: `micro-codegen`,
 regressions, review precision/recall, retrieval recall@k, hallucination rate,
 calibration (Brier, ECE), latency/throughput/memory.
 
+## Deterministic regression
+
+The grader's own verdicts are guarded by a committed good/bad baseline
+(`benchmarks/baselines/deterministic-v1.json`) re-run through the same
+executable grader. A regression is any mismatch between expected and actual
+status — including a failure mode that changed (`TEST_FAIL` → `COMPILE_FAIL`)
+but including a bad fixture that now passes. `make regression` runs the
+software checks plus the 11 baseline cases (`make regression-fast`,
+`make regression-grader`, `make regression-show`), writes git-ignored reports
+to `artifacts/evaluations/regression/` with history deltas, and exposes
+read-only endpoints + the Benchmarks progress panel. Baseline fixtures and
+hidden tests are excluded from training corpora. See `docs/regression.md`.
+
 ## Visualizers
 
 Architecture, tokenizer, training curves, scaling, attention, weight stats,
@@ -211,4 +224,4 @@ cd apps/web-vue && npm install && npm run dev            # UI :5173
 Health checks: `http://localhost:8080/api/health`, `http://localhost:8000/health`.
 
 See `docs/deployment.md`, `notebooks/README.md`, `benchmarks/README.md`,
-`sandbox/README.md`.
+`sandbox/README.md`, `docs/regression.md`.

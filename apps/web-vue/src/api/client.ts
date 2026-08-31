@@ -3,6 +3,8 @@ import type {
   EvaluationRunRecord,
   EvaluationRunRequest,
   EvaluationTaskSummary,
+  RegressionHistory,
+  RegressionReport,
 } from "../types";
 
 export const api = axios.create({
@@ -46,4 +48,21 @@ export async function runEvaluation(
     timeout: EVALUATION_TIMEOUT,
   });
   return unwrap<EvaluationRunRecord>(response);
+}
+
+export async function getLatestRegressionReport(): Promise<RegressionReport> {
+  const response = await api.get("/benchmarks/regression/latest", {
+    timeout: 15000,
+  });
+  return unwrap<RegressionReport>(response);
+}
+
+export async function getRegressionHistory(
+  limit = 20,
+): Promise<RegressionHistory> {
+  const response = await api.get(
+    `/benchmarks/regression/history?limit=${limit}`,
+    { timeout: 15000 },
+  );
+  return unwrap<RegressionHistory>(response);
 }

@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -54,5 +55,17 @@ public class BenchmarkController {
     @PostMapping("/evaluations/run")
     public ApiResponse<Map<String, Object>> runEvaluation(@Valid @RequestBody EvaluationRunRequest request) {
         return ApiResponse.ok(mlGatewayClient.runEvaluation(request));
+    }
+
+    @GetMapping("/regression/latest")
+    public ApiResponse<Map<String, Object>> regressionLatest() {
+        return ApiResponse.ok(mlGatewayClient.latestRegressionReport());
+    }
+
+    @GetMapping("/regression/history")
+    public ApiResponse<Map<String, Object>> regressionHistory(
+            @RequestParam(defaultValue = "20") int limit) {
+        int clamped = Math.max(1, Math.min(limit, 100));
+        return ApiResponse.ok(mlGatewayClient.regressionHistory(clamped));
     }
 }

@@ -157,3 +157,9 @@ perf-results/
 
 # TypeScript incremental build cache
 *.tsbuildinfo
+
+# Local implementation instructions
+/instructions.txt
+
+# Generated deterministic regression reports
+/artifacts/evaluations/regression/

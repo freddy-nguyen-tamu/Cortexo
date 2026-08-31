@@ -1,5 +1,6 @@
 """Evaluation: runner, pass@k, hallucination validators, resource metrics,
-calibration, and the executable hidden-test grader."""
+calibration, the executable hidden-test grader, and the deterministic
+engineering-regression harness."""
 
 from cortexo_ml.evaluation.runner import run_evaluation, RunOutcome, model_visible_task
 from cortexo_ml.evaluation.pass_at_k import compute_pass_at_k, pass_at_k_batch
@@ -21,6 +22,15 @@ from cortexo_ml.evaluation.candidate_extraction import (
     validate_diff_targets,
     count_changed_lines,
     count_changed_lines_in_diff,
+)
+from cortexo_ml.evaluation.regression import (
+    DEFAULT_SUITE,
+    load_baseline,
+    load_latest_report,
+    history_summaries,
+    public_regression_report,
+    public_regression_summary,
+    run_deterministic_cases,
 )
 
 __all__ = [
@@ -50,4 +60,11 @@ __all__ = [
     "validate_diff_targets",
     "count_changed_lines",
     "count_changed_lines_in_diff",
+    "DEFAULT_SUITE",
+    "load_baseline",
+    "load_latest_report",
+    "history_summaries",
+    "public_regression_report",
+    "public_regression_summary",
+    "run_deterministic_cases",
 ]

@@ -305,6 +305,6 @@ def test_diff_applies_without_shell():
     subprocess.run(["git", "add", "-A"], cwd=str(repo), check=True, env=env)
     subprocess.run(["git", "commit", "-qm", "base"], cwd=str(repo), check=True, env=env)
     diff = ("--- a/src/merge.py\n+++ b/src/merge.py\n"
-            "@@ -1,2 +1,3 @@\n def merge_dicts(a, b):\n-    return dict(a)\n+    return {**a, **b}\n")
+            "@@ -1,2 +1,2 @@\n def merge_dicts(a, b):\n-    return dict(a)\n+    return {**a, **b}\n")
     grader._apply_diff(repo, diff)
     assert "{**a, **b}" in (repo / "src" / "merge.py").read_text(encoding="utf-8")

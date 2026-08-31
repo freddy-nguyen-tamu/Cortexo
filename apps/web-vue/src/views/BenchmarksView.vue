@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import EvaluationGraderPanel from "../components/benchmarks/EvaluationGraderPanel.vue";
+import RegressionProgressPanel from "../components/benchmarks/RegressionProgressPanel.vue";
 </script>
 
 <template>
@@ -12,6 +13,8 @@ import EvaluationGraderPanel from "../components/benchmarks/EvaluationGraderPane
       decided by executable tests in a restricted sandbox, never by string
       matching or gold-patch comparison.
     </p>
+
+    <RegressionProgressPanel />
 
     <EvaluationGraderPanel />
 

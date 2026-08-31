@@ -159,6 +159,42 @@ button {
   white-space: pre-wrap;
 }
 
+.data-table-wrap {
+  overflow-x: auto;
+  margin-top: 1rem;
+}
+
+.data-table-wrap h4 {
+  margin-bottom: 0.5rem;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.data-table th,
+.data-table td {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--panel-border);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.data-table thead th {
+  opacity: 0.7;
+  font-weight: 600;
+}
+
+.data-table tbody tr:hover {
+  background: var(--control-bg);
+}
+
+.data-table .data-row-current {
+  background: var(--control-bg);
+}
+
 details {
   margin-top: 0.5rem;
 }

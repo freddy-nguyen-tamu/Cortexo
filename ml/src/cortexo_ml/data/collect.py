@@ -50,6 +50,11 @@ LANGUAGE_BY_EXT = {
 
 
 def path_should_skip(path: str) -> tuple[bool, str]:
+    normalized = path.replace("\\", "/").lstrip("./")
+    if normalized == "benchmarks/baselines" or normalized.startswith("benchmarks/baselines/"):
+        return True, "evaluation-baseline"
+    if normalized == "benchmarks/hidden_tests" or normalized.startswith("benchmarks/hidden_tests/"):
+        return True, "hidden-test"
     parts = Path(path).parts
     for component in parts:
         if component in EXCLUDED_NAMES:

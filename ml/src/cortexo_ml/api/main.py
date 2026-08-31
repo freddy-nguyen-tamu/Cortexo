@@ -272,6 +272,27 @@ def evaluation_run(req: EvaluationRequest):
     return {"status": "ok", "data": record}
 
 
+@app.get("/v1/regression/latest")
+def regression_latest():
+    from cortexo_ml.evaluation.regression import load_latest_report, public_regression_report
+
+    regression_dir = ARTIFACTS_ROOT / "evaluations" / "regression"
+    report = load_latest_report(regression_dir)
+    if report is None:
+        raise HTTPException(status_code=404, detail="no regression report found; run make regression first")
+    return {"status": "ok", "data": public_regression_report(report)}
+
+
+@app.get("/v1/regression/history")
+def regression_history(limit: int = 20):
+    from cortexo_ml.evaluation.regression import history_summaries
+
+    regression_dir = ARTIFACTS_ROOT / "evaluations" / "regression"
+    clamped = max(1, min(limit, 100))
+    summaries = history_summaries(regression_dir, limit=clamped)
+    return {"status": "ok", "data": {"reports": summaries, "limit": clamped}}
+
+
 class _PromptBackend:
     """Deterministic offline agent backend that can answer simple repair prompts."""
 

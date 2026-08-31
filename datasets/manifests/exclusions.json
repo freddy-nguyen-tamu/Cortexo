@@ -5,10 +5,12 @@
     "benchmarkSolutions": true,
     "hiddenTests": true,
     "benchmarkTargetPatches": true,
-    "explanation": "Solutions, hidden tests and target patches inside benchmarks/ must never be mixed into any training corpus. benchmarks/ is separated from datasets/ and excluded by path in the collect pipeline."
+    "deterministicBaselines": true,
+    "explanation": "Solutions, hidden tests, target patches and deterministic baselines inside benchmarks/ must never be mixed into any training corpus. benchmarks/ is separated from datasets/ and excluded by path in the collect pipeline."
   },
   "paths": [
     "benchmarks",
+    "benchmarks/baselines",
     "datasets/benchmark",
     "artifacts",
     "sandbox",

@@ -111,6 +111,40 @@ public class MLGatewayClient {
         return wrapped;
     }
 
+    public Map<String, Object> latestRegressionReport() {
+        try {
+            Map<String, Object> wrapped = mlGatewayClient.get()
+                    .uri("/v1/regression/latest")
+                    .retrieve()
+                    .bodyToMono(new org.springframework.core.ParameterizedTypeReference<Map<String, Object>>() {
+                    })
+                    .timeout(Duration.ofSeconds(10))
+                    .block();
+            return unwrap(wrapped);
+        } catch (Exception e) {
+            log.warn("ML gateway regression report unavailable", e);
+            return Map.of("available", false, "error", e.getClass().getSimpleName());
+        }
+    }
+
+    public Map<String, Object> regressionHistory(int limit) {
+        try {
+            Map<String, Object> wrapped = mlGatewayClient.get()
+                    .uri(uriBuilder -> uriBuilder.path("/v1/regression/history")
+                            .queryParam("limit", limit)
+                            .build())
+                    .retrieve()
+                    .bodyToMono(new org.springframework.core.ParameterizedTypeReference<Map<String, Object>>() {
+                    })
+                    .timeout(Duration.ofSeconds(10))
+                    .block();
+            return unwrap(wrapped);
+        } catch (Exception e) {
+            log.warn("ML gateway regression history unavailable", e);
+            return Map.of("available", false, "error", e.getClass().getSimpleName());
+        }
+    }
+
     public Map<String, Object> health() {
         try {
             return mlGatewayClient.get()

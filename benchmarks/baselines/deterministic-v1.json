@@ -1,0 +1,95 @@
+{
+  "suiteVersion": "deterministic-v1",
+  "description": "Fixed executable-grader regression suite. Known-good candidates must pass and known-bad candidates must fail with the expected classification.",
+  "requiredScore": 1.0,
+  "cases": [
+    {
+      "id": "merge-dicts-good",
+      "category": "executable-grading",
+      "taskId": "micro-codegen/merge_dicts",
+      "candidate": "fixtures/correct/merge_dicts.py",
+      "expectedStatus": "PASS",
+      "expectedPassed": true
+    },
+    {
+      "id": "merge-dicts-bad",
+      "category": "test-classification",
+      "taskId": "micro-codegen/merge_dicts",
+      "candidate": "fixtures/incorrect/merge_dicts.py",
+      "expectedStatus": "TEST_FAIL",
+      "expectedPassed": false
+    },
+    {
+      "id": "merge-dicts-syntax-error",
+      "category": "compile-classification",
+      "taskId": "micro-codegen/merge_dicts",
+      "candidate": "fixtures/invalid/merge_dicts_syntax.py",
+      "expectedStatus": "COMPILE_FAIL",
+      "expectedPassed": false
+    },
+    {
+      "id": "fibonacci-good",
+      "category": "executable-grading",
+      "taskId": "micro-codegen/fibonacci",
+      "candidate": "fixtures/correct/fibonacci.py",
+      "expectedStatus": "PASS",
+      "expectedPassed": true
+    },
+    {
+      "id": "fibonacci-bad",
+      "category": "test-classification",
+      "taskId": "micro-codegen/fibonacci",
+      "candidate": "fixtures/incorrect/fibonacci.py",
+      "expectedStatus": "TEST_FAIL",
+      "expectedPassed": false
+    },
+    {
+      "id": "palindrome-good",
+      "category": "executable-grading",
+      "taskId": "micro-codegen/is_palindrome",
+      "candidate": "fixtures/correct/is_palindrome.py",
+      "expectedStatus": "PASS",
+      "expectedPassed": true
+    },
+    {
+      "id": "palindrome-bad",
+      "category": "test-classification",
+      "taskId": "micro-codegen/is_palindrome",
+      "candidate": "fixtures/incorrect/is_palindrome.py",
+      "expectedStatus": "TEST_FAIL",
+      "expectedPassed": false
+    },
+    {
+      "id": "unique-counts-good",
+      "category": "executable-grading",
+      "taskId": "micro-codegen/unique_counts",
+      "candidate": "fixtures/correct/unique_counts.py",
+      "expectedStatus": "PASS",
+      "expectedPassed": true
+    },
+    {
+      "id": "unique-counts-bad",
+      "category": "test-classification",
+      "taskId": "micro-codegen/unique_counts",
+      "candidate": "fixtures/incorrect/unique_counts.py",
+      "expectedStatus": "TEST_FAIL",
+      "expectedPassed": false
+    },
+    {
+      "id": "range-util-good",
+      "category": "bug-repair",
+      "taskId": "synthetic-bugfix/range_util",
+      "candidate": "fixtures/correct/range_util.py",
+      "expectedStatus": "PASS",
+      "expectedPassed": true
+    },
+    {
+      "id": "range-util-partial",
+      "category": "bug-repair-classification",
+      "taskId": "synthetic-bugfix/range_util",
+      "candidate": "fixtures/incorrect/range_util_partial.py",
+      "expectedStatus": "TEST_FAIL",
+      "expectedPassed": false
+    }
+  ]
+}
