@@ -125,8 +125,11 @@ def check_generated_patch(patch: str) -> list[str]:
     return findings
 
 
-def docker_flags(memory: str = DEFAULT_MEMORY, cpus: int = DEFAULT_CPUS,
-                 pids: int = DEFAULT_PIDS, timeout_ms: int | None = None) -> list[str]:
+def docker_flags(
+    memory: str = DEFAULT_MEMORY,
+    cpus: int = DEFAULT_CPUS,
+    pids: int = DEFAULT_PIDS,
+) -> list[str]:
     flags = [
         "--rm",
         "--network", "none",
@@ -143,8 +146,6 @@ def docker_flags(memory: str = DEFAULT_MEMORY, cpus: int = DEFAULT_CPUS,
         "--env", "PYTHONDONTWRITEBYTECODE=1",
         "--env", "HOME=/tmp",
     ]
-    if timeout_ms is not None:
-        flags += ["-m", str(timeout_ms)]
     return flags
 
 

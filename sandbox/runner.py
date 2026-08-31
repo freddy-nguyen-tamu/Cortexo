@@ -77,13 +77,16 @@ def run_request(req: dict, workspace: Path) -> dict:
         }
 
     start = time.monotonic()
-    cidfile = tempfile.NamedTemporaryFile(delete=False, prefix="cortexo-cid-").name
+    # Docker --cidfile requires the target file NOT to exist before
+    # `docker run`. Reserve a private temporary directory and let Docker
+    # create the actual CID file inside it.
+    cid_dir = Path(tempfile.mkdtemp(prefix="cortexo-cid-"))
+    cidfile = str(cid_dir / "container.cid")
 
     flags = docker_flags(
         memory=decision.memory,
         cpus=decision.cpus,
         pids=decision.pids,
-        timeout_ms=decision.timeout_seconds * 1000,
     )
     flags += [
         "--cidfile", cidfile,
@@ -123,10 +126,7 @@ def run_request(req: dict, workspace: Path) -> dict:
 
     duration_ms = int((time.monotonic() - start) * 1000)
 
-    try:
-        os.unlink(cidfile)
-    except OSError:
-        pass
+    shutil.rmtree(cid_dir, ignore_errors=True)
 
     exit_code = proc.returncode if proc.returncode is not None else -1
     passed = (not timed_out) and exit_code == 0

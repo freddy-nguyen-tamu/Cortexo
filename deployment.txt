@@ -323,4 +323,26 @@ for case in cases:
     print("-" * 100)
 PY
 
+SANDBOX SMOKETEST BEFORE ENTIRE SUITE 
+cd /home/projects/Cortexo && \
+WS="$(mktemp -d /tmp/cortexo-sandbox-smoke-XXXXXX)" && \
+printf 'def add(a, b):\n    return a + b\n' > "$WS/solution.py" && \
+chmod 755 "$WS" && \
+chmod 644 "$WS/solution.py" && \
+REQ="$(mktemp /tmp/cortexo-sandbox-request-XXXXXX.json)" && \
+printf '%s\n' '{"workspaceId":"manual-smoke","commandType":"COMPILE","language":"python","timeoutSeconds":30}' > "$REQ" && \
+python3 sandbox/runner.py \
+  --request-file "$REQ" \
+  --workspace "$WS" \
+  --keep-workspace; \
+RC=$?; \
+echo; \
+echo "SANDBOX RUNNER EXIT CODE: $RC"; \
+rm -rf "$WS" "$REQ"; \
+"
+
+cd /home/projects/Cortexo && ( set +e; WS="$(mktemp -d /tmp/cortexo-sandbox-smoke-XXXXXX)"; REQ="$(mktemp /tmp/cortexo-sandbox-request-XXXXXX.json)"; LOG="$(mktemp /tmp/cortexo-sandbox-smoke-XXXXXX.log)"; printf 'def add(a, b):\n    return a + b\n' > "$WS/solution.py"; chmod 755 "$WS"; chmod 644 "$WS/solution.py"; printf '%s\n' '{"workspaceId":"manual-smoke","commandType":"COMPILE","language":"python","timeoutSeconds":30}' > "$REQ"; echo "=== WORKSPACE ==="; echo "$WS"; echo "=== REQUEST ==="; cat "$REQ"; echo "=== SANDBOX OUTPUT ==="; python3 sandbox/runner.py --request-file "$REQ" --workspace "$WS" --keep-workspace 2>&1 | tee "$LOG"; RC=${PIPESTATUS[0]}; echo; echo "============================================================"; echo "SANDBOX RUNNER EXIT CODE: $RC"; echo "LOG: $LOG"; echo "WORKSPACE: $WS"; echo "============================================================"; if [ "$RC" -eq 0 ]; then echo "SANDBOX SMOKE: PASS"; rm -rf "$WS" "$REQ"; else echo "SANDBOX SMOKE: FAIL"; echo "Workspace and log preserved for debugging."; rm -f "$REQ"; fi; true )
+
+
+
 

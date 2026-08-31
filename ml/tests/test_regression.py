@@ -426,3 +426,68 @@ def test_baseline_sha256_is_stable_and_detects_changes(tmp_path):
     payload["requiredScore"] = 0.9
     _write_baseline(tmp_path, payload)
     assert baseline_sha256(tmp_path) != first
+
+def test_sandbox_docker_flags_do_not_encode_timeout_as_memory():
+    """Docker -m means memory, so timeout values must never become -m flags."""
+    import importlib.util
+    import sys
+    from pathlib import Path
+
+    policy_path = Path(__file__).resolve().parents[2] / "sandbox" / "policy.py"
+
+    spec = importlib.util.spec_from_file_location(
+        "cortexo_test_sandbox_policy",
+        policy_path,
+    )
+    assert spec is not None
+    assert spec.loader is not None
+
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+
+    try:
+        spec.loader.exec_module(module)
+
+        flags = module.docker_flags(
+            memory="1g",
+            cpus=1,
+            pids=128,
+        )
+
+        assert "--memory" in flags
+        memory_index = flags.index("--memory")
+        assert flags[memory_index + 1] == "1g"
+
+        # Docker's short -m option is an alias for --memory, NOT a timeout.
+        assert "-m" not in flags
+
+        # There should be exactly one memory-limit declaration.
+        assert flags.count("--memory") == 1
+    finally:
+        sys.modules.pop(spec.name, None)
+
+
+def test_sandbox_runner_uses_timeout_command_not_docker_memory_flag():
+    """Wall-clock timeout belongs to /usr/bin/timeout, not docker -m."""
+    from pathlib import Path
+
+    runner_path = Path(__file__).resolve().parents[2] / "sandbox" / "runner.py"
+    text = runner_path.read_text(encoding="utf-8")
+
+    assert '"--entrypoint", "/usr/bin/timeout"' in text
+    assert '"--kill-after=10"' in text
+    assert "timeout_ms=" not in text
+
+
+
+def test_sandbox_runner_cidfile_does_not_preexist():
+    """Docker must create --cidfile; runner must not pre-create that file."""
+    from pathlib import Path
+
+    runner_path = Path(__file__).resolve().parents[2] / "sandbox" / "runner.py"
+    text = runner_path.read_text(encoding="utf-8")
+
+    assert 'NamedTemporaryFile(delete=False, prefix="cortexo-cid-")' not in text
+    assert 'tempfile.mkdtemp(prefix="cortexo-cid-")' in text
+    assert 'cidfile = str(cid_dir / "container.cid")' in text
+    assert '"--cidfile", cidfile' in text
