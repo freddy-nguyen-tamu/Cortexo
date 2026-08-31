@@ -170,3 +170,24 @@ CLEAN TEST BEFORE FILLING IN PLACEHOLDER
 cd /home/projects/Cortexo/apps/api-spring
 mvn clean test
 
+TEST LOOP 1 GRADER TEST
+cd /home/projects/Cortexo && \
+set -e && \
+echo '=== PYTHON COMPILE ===' && \
+ml/.venv/bin/python -m compileall -q ml/src/cortexo_ml && \
+echo '=== PYTHON TESTS ===' && \
+ml/.venv/bin/python -m pytest -q ml/tests -ra && \
+echo '=== SANDBOX IMAGE ===' && \
+docker build -t cortexo-sandbox:latest sandbox >/dev/null && \
+docker image inspect cortexo-sandbox:latest >/dev/null && \
+echo '=== VUE TYPECHECK ===' && \
+(cd apps/web-vue && npm run typecheck) && \
+echo '=== VUE BUILD ===' && \
+(cd apps/web-vue && npm run build) && \
+echo '=== SPRING TEST ===' && \
+(cd apps/api-spring && export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64 && export PATH="$JAVA_HOME/bin:$PATH" && mvn -q test) && \
+echo '=== GOLD LEAK CHECK ===' && \
+! grep -R --line-number --include='*.py' 'patch = task.get("gold_patch")' ml/src/cortexo_ml && \
+echo '=== SUCCESS ===' && \
+echo 'ALL EXECUTABLE GRADER FEATURE CHECKS PASSED'
+

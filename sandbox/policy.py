@@ -33,7 +33,7 @@ IMAGE_NAME = "cortexo-sandbox:latest"
 COMMANDS: dict[str, dict[str, dict[str, str]]] = {
     "python": {
         "TEST": {"argv": ["python3", "-m", "pytest", "--no-header", "-q"], "file": "pytest"},
-        "COMPILE": {"argv": ["python3", "-m", "py_compile"], "file": "compile"},
+        "COMPILE": {"argv": ["python3", "-m", "compileall", "-q", "."], "file": "compileall"},
         "LINT": {"argv": ["python3", "-m", "pyflakes"], "file": "lint"},
         "FORMAT": {"argv": ["python3", "-m", "black", "--check"], "file": "format"},
         "STATIC_ANALYSIS": {"argv": ["python3", "-m", "bandit", "-r", "."], "file": "bandit"},

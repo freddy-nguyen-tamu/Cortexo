@@ -61,6 +61,24 @@ Every model receives the same `EvaluationTask`: `task_id`, `task_type`,
 `test_command`, `compile_command`, `gold_files`, `gold_patch`,
 `ground_truth_findings`, `timeout_seconds`.
 
+The runner only hands the model a **model-visible projection** of the task
+(`task_id`, `task_type`, `prompt`, `repository_snapshot_id`, `language`,
+`timeout_seconds`, ...). Evaluator-only fields (`expected_behavior`,
+`gold_patch`, `gold_files`, `ground_truth_findings`, `test_command`,
+`compile_command`, hidden tests) never reach a prompt, agent tool call, or the
+frontend.
+
+### Executable evaluation (executable grading path)
+
+`POST /v1/evaluations/run` (grader-gated, `CORTEXO_GRADER_ENABLED` defaults
+off -> `503`) composes: trusted task loader -> prompt generation -> candidate
+extraction -> ephemeral workspace -> fixture stage -> candidate apply
+(allow-listed, no shell) -> hidden tests staged *after* generation -> sandbox
+COMPILE/TEST -> status classification. The spec lives in
+`benchmarks/suites/grader_registry.json` and is read from the repository, never
+from model output. Candidate module code is never imported on the host and only
+runs inside the Docker sandbox.
+
 ## Data plane
 
 - **MongoDB** (primary): users, repositories, repository_snapshots/files/

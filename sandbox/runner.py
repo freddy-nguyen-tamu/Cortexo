@@ -140,7 +140,7 @@ def run_request(req: dict, workspace: Path) -> dict:
         "stderr": _truncate(stderr),
         "timedOut": timed_out,
         "durationMs": duration_ms,
-        "commandType": decision.command[0] if decision.command else None,
+        "commandType": req.get("commandType"),
         "memory": decision.memory,
         "cpus": decision.cpus,
         "pids": decision.pids,

@@ -27,6 +27,7 @@ benchmarks/
 |-- tasks/               one JSON file per suite, each containing evaluation tasks
 |-- hidden_tests/        hidden tests + graders (micro_codegen, synthetic_bugfix, polydb)
 |-- suites/suites.json   suite registry and metric notes
+|-- suites/grader_registry.json   evaluator-only executable-grading specs
 ```
 
 ## Suites
@@ -55,6 +56,42 @@ migrate DDL between dialects, diagnose incorrect JOIN, identify transaction
 isolation problems, explain stored procedures, repair JDBC/JPA mappings, choose
 a useful index, identify hallucinated tables/columns, explain query-plan
 differences, generate migration scripts.
+
+## Executable grading path
+
+`benchmarks/suites/grader_registry.json` maps a canonical `task_id` to an
+evaluator-only grading spec. It is read straight from the repository, never
+from model output, and it is never sent to a model:
+
+```json
+{
+  "kind": "standalone_python",
+  "candidateTargets": ["solution.py"],
+  "test_command": ["pytest", "-q"],
+  "compile_command": ["python3", "-m", "compileall", "-q", "."],
+  "hiddenTests": ["hidden_tests/micro_codegen/test_merge_dicts.py"]
+}
+```
+
+Grading flow (`ml/src/cortexo_ml/evaluation/`):
+
+1. **candidate_extraction.py** — the untrusted model output is normalized into
+   a `full_file` or `unified_diff` candidate without executing it. Diffs are
+   allow-listed per task: absolute paths, `..` traversal, file
+   creation/deletion, and any touch of `tests/`, `hidden_tests/`,
+   `benches_hidden/` or VCS dirs are rejected before `git apply`.
+2. **grader.py** — builds an ephemeral workspace, stages the fixture, applies
+   the candidate, stages hidden tests (only AFTER generation), then runs the
+   fixed sandbox COMPILE and TEST stages. Candidate code is never imported on
+   the host.
+3. **runner.py / API** — `POST /v1/evaluations/run` composes prompt -> trusted
+   grader. The grader status (`PASS`, `COMPILE_FAIL`, `TEST_FAIL`,
+   `SANDBOX_TIMEOUT`, `SANDBOX_POLICY`, `CANDIDATE_INVALID`, ...) is recorded.
+
+Grading is gated by `CORTEXO_GRADER_ENABLED` and defaults to **off**
+(`503` from the API when disabled). Hidden tests, gold patches and the
+registry are never visible to the model, and candidate module code is only
+ever executed inside the Docker sandbox.
 
 ## Integrity rules
 

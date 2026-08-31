@@ -1,3 +1,4 @@
+import json
 import os
 import time
 from pathlib import Path
@@ -12,6 +13,12 @@ from cortexo_ml.serving.backends import EchoBackend
 app = FastAPI(title="Cortexo ML Gateway", version="0.1.0")
 
 ARTIFACTS_ROOT = Path(os.environ.get("CORTEXO_ARTIFACTS", "artifacts"))
+REPO_ROOT = Path(os.environ.get(
+    "CORTEXO_REPO_ROOT",
+    Path(__file__).resolve().parents[4],
+)).resolve()
+TASKS_ROOT = REPO_ROOT / "benchmarks" / "tasks"
+GRADER_ENABLED = os.environ.get("CORTEXO_GRADER_ENABLED", "false").lower() in {"1", "true", "yes", "on"}
 BACKENDS: dict[str, Any] = {}
 _indexes: dict[str, Any] = {}
 
@@ -22,6 +29,14 @@ def _get_backend(model_id: str) -> Any:
     backend = EchoBackend(model_id=model_id)
     BACKENDS[model_id] = backend
     return backend
+
+
+class EvaluationRequest(BaseModel):
+    taskId: str
+    modelVariantId: str
+    repositorySnapshotId: str | None = None
+    seed: int = 42
+    generation: dict[str, Any] = Field(default_factory=dict)
 
 
 class GenerateRequest(BaseModel):
@@ -51,13 +66,6 @@ class AgentRunRequest(BaseModel):
     task: str
     maxAttempts: int = 3
     language: str = "python"
-
-
-class EvaluationRequest(BaseModel):
-    task: dict[str, Any]
-    modelVariantId: str
-    repositorySnapshotId: str | None = None
-    seed: int = 42
 
 
 @app.get("/health")
@@ -180,12 +188,66 @@ def agent_run(req: AgentRunRequest):
     return {"status": "ok", "data": result.to_record()}
 
 
+def _load_canonical_tasks() -> list[dict[str, Any]]:
+    if not TASKS_ROOT.is_dir():
+        raise HTTPException(status_code=500, detail=f"task root not found: {TASKS_ROOT}")
+    tasks: list[dict[str, Any]] = []
+    for path in sorted(TASKS_ROOT.glob("*.json")):
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            continue
+        if isinstance(data, list):
+            tasks.extend(item for item in data if isinstance(item, dict))
+    return tasks
+
+
+def _load_canonical_task(task_id: str) -> dict[str, Any]:
+    for task in _load_canonical_tasks():
+        if task.get("task_id") == task_id:
+            return task
+    raise HTTPException(status_code=404, detail=f"task not found: {task_id}")
+
+
+def _sanitize_task_summary(task: dict[str, Any]) -> dict[str, Any]:
+    """Public task metadata only. NEVER include evaluator-only fields."""
+    summary: dict[str, Any] = {
+        "taskId": task.get("task_id"),
+        "taskType": task.get("task_type"),
+        "repositorySnapshotId": task.get("repository_snapshot_id"),
+        "prompt": task.get("prompt"),
+        "language": task.get("language"),
+        "timeoutSeconds": task.get("timeout_seconds"),
+    }
+    for key in ("requiresTools", "dialect"):
+        if key in task:
+            summary[key] = task[key]
+    return summary
+
+
+@app.get("/v1/evaluations/tasks")
+def evaluation_tasks():
+    return {"status": "ok", "data": {"tasks": [_sanitize_task_summary(t) for t in _load_canonical_tasks()]}}
+
+
 @app.post("/v1/evaluations/run")
 def evaluation_run(req: EvaluationRequest):
+    if not GRADER_ENABLED:
+        raise HTTPException(status_code=503, detail="executable grader is disabled")
     from cortexo_ml.evaluation.runner import run_evaluation
+    from cortexo_ml.evaluation.grader import ExecutableGrader
 
-    def _prompt_fn(prompt: str) -> str:
-        return _get_backend(req.modelVariantId).generate(prompt, GenerationConfig(temperature=0.2)).text
+    task = _load_canonical_task(req.taskId)
+
+    config = GenerationConfig(
+        max_new_tokens=int(req.generation.get("maxNewTokens", 256)),
+        temperature=float(req.generation.get("temperature", 0.2)),
+        top_p=float(req.generation.get("topP", req.generation.get("top_p", 0.95))),
+        top_k=int(req.generation.get("topK", req.generation.get("top_k", 50))),
+    )
+
+    def _prompt_fn(prompt: str):
+        return _get_backend(req.modelVariantId).generate(prompt, config)
 
     def _retrieval_fn(query: str):
         index = _indexes.get(req.repositorySnapshotId or "")
@@ -193,12 +255,18 @@ def evaluation_run(req: EvaluationRequest):
             return index.search(query, max_tokens=4096)
         return None
 
+    grader = ExecutableGrader(repo_root=REPO_ROOT)
+
+    def _grader_fn(canonical_task: dict, output: str) -> dict:
+        return grader.grade(canonical_task, output).to_record()
+
     record = run_evaluation(
-        task=req.task,
+        task=task,
         model_variant_id=req.modelVariantId,
         prompt_fn=_prompt_fn,
-        repository_snapshot_id=req.repositorySnapshotId,
+        repository_snapshot_id=req.repositorySnapshotId or task.get("repository_snapshot_id"),
         retrieval_fn=_retrieval_fn,
+        grader_fn=_grader_fn,
         seed=req.seed,
     )
     return {"status": "ok", "data": record}

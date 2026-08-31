@@ -1,6 +1,8 @@
 package com.cortexo.lab.benchmarks;
 
 import com.cortexo.lab.common.ApiResponse;
+import com.cortexo.lab.inference.MLGatewayClient;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -16,9 +18,11 @@ import java.util.Map;
 public class BenchmarkController {
 
     private final BenchmarkService service;
+    private final MLGatewayClient mlGatewayClient;
 
-    public BenchmarkController(BenchmarkService service) {
+    public BenchmarkController(BenchmarkService service, MLGatewayClient mlGatewayClient) {
         this.service = service;
+        this.mlGatewayClient = mlGatewayClient;
     }
 
     @GetMapping("/suites")
@@ -40,5 +44,15 @@ public class BenchmarkController {
     @GetMapping("/models/{modelVariantId}/runs")
     public ApiResponse<List<BenchmarkRun>> modelRuns(@PathVariable String modelVariantId) {
         return ApiResponse.ok(service.runsOfModel(modelVariantId));
+    }
+
+    @GetMapping("/evaluations/tasks")
+    public ApiResponse<Map<String, Object>> evaluationTasks() {
+        return ApiResponse.ok(mlGatewayClient.listEvaluationTasks());
+    }
+
+    @PostMapping("/evaluations/run")
+    public ApiResponse<Map<String, Object>> runEvaluation(@Valid @RequestBody EvaluationRunRequest request) {
+        return ApiResponse.ok(mlGatewayClient.runEvaluation(request));
     }
 }

@@ -43,3 +43,72 @@ export interface GenerateResponse {
     warnings: string[];
   };
 }
+
+export interface EvaluationTaskSummary {
+  taskId: string;
+  taskType: string;
+  repositorySnapshotId?: string | null;
+  prompt: string;
+  language: string;
+  timeoutSeconds: number;
+  requiresTools?: boolean;
+  dialect?: string;
+}
+
+export interface EvaluationRunRequest {
+  taskId: string;
+  modelVariantId: string;
+  repositorySnapshotId?: string | null;
+  seed: number;
+  generation: Record<string, unknown>;
+}
+
+export interface ExecutionStageResult {
+  attempted: boolean;
+  passed: boolean;
+  exitCode: number | null;
+  timedOut: boolean;
+  policyViolation: boolean;
+  durationMs: number;
+  stdout: string;
+  stderr: string;
+}
+
+export interface GraderTestSummary {
+  passedCount: number;
+  failedCount: number;
+  errorCount: number;
+  skippedCount: number;
+  collectedCount: number;
+}
+
+export interface GraderResult {
+  applicable: boolean;
+  passed: boolean;
+  status: string;
+  candidateKind: string | null;
+  candidateSha256: string | null;
+  candidateBytes: number;
+  changedFiles: string[];
+  changedLines: number;
+  patchApplied: boolean;
+  compile: ExecutionStageResult | null;
+  testStage: ExecutionStageResult | null;
+  testSummary: GraderTestSummary;
+  durationMs: number;
+}
+
+export interface EvaluationRunRecord {
+  runId: string;
+  taskId: string;
+  modelVariantId: string;
+  repositorySnapshotId?: string | null;
+  seed: number;
+  status: string;
+  generation: Record<string, unknown>;
+  output: string;
+  patch?: string | null;
+  tests: GraderResult | Record<string, unknown>;
+  metrics: Record<string, unknown>;
+  createdAt: string;
+}

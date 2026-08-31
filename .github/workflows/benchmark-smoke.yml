@@ -40,6 +40,51 @@ jobs:
           print("total tasks:", total)
           PY
 
+      - name: Validate grader registry references exist
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          root = Path(".")
+          registry = json.loads((root / "benchmarks/suites/grader_registry.json").read_text())
+          assert registry, "grader registry must not be empty"
+          for task_id, spec in registry.items():
+              assert spec.get("kind") in {"standalone_python", "single_file_fixture", "repository_fixture"}
+              for candidate in spec.get("candidateTargets", []):
+                  assert candidate, f"{task_id}: empty candidate target"
+              for hidden in spec.get("hiddenTests", []):
+                  assert (root / "benchmarks" / hidden).is_file(), f"{task_id}: missing hidden test {hidden}"
+              kind = spec.get("kind")
+              if kind == "single_file_fixture":
+                  src = root / "benchmarks" / spec["fixtureSource"]
+                  assert src.is_file(), f"{task_id}: missing fixture {spec['fixtureSource']}"
+              if kind == "repository_fixture":
+                  src = root / "benchmarks" / spec["fixtureSource"]
+                  assert src.is_dir(), f"{task_id}: missing fixture repo {spec['fixtureSource']}"
+          print("grader registry ok:", len(registry), "entries")
+          PY
+
+      - name: Grader classification smoke (no docker required)
+        run: |
+          cd ml
+          python - <<'PY'
+          from pathlib import Path
+          from cortexo_ml.evaluation.candidate_extraction import extract_candidate
+          from cortexo_ml.evaluation.grader import ExecutableGrader, STATUS_NOT_APPLICABLE
+
+          code = "def merge_dicts(left, right):\n    return {**left, **right}\n"
+          c = extract_candidate(code)
+          assert c.kind == "full_file" and len(c.sha256) == 64
+
+          grader = ExecutableGrader(repo_root=Path("..").resolve())
+          result = grader.grade(
+              {"task_id": "unlisted/suite", "task_type": "code_generation", "language": "python", "prompt": "x"},
+              code,
+          )
+          assert result.status == STATUS_NOT_APPLICABLE and result.applicable is False
+          print("grader classification smoke ok")
+          PY
+
       - name: Smoke run - one synthetic repo, two tiny tasks, placeholder model
         run: |
           cd ml

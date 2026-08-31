@@ -1,0 +1,34 @@
+{
+  "micro-codegen/fibonacci": {
+    "kind": "standalone_python",
+    "candidateTargets": ["solution.py"],
+    "hiddenTests": ["hidden_tests/micro_codegen/test_fibonacci.py"]
+  },
+  "micro-codegen/merge_dicts": {
+    "kind": "standalone_python",
+    "candidateTargets": ["solution.py"],
+    "hiddenTests": ["hidden_tests/micro_codegen/test_merge_dicts.py"]
+  },
+  "micro-codegen/is_palindrome": {
+    "kind": "standalone_python",
+    "candidateTargets": ["solution.py"],
+    "hiddenTests": ["hidden_tests/micro_codegen/test_is_palindrome.py"]
+  },
+  "micro-codegen/unique_counts": {
+    "kind": "standalone_python",
+    "candidateTargets": ["solution.py"],
+    "hiddenTests": ["hidden_tests/micro_codegen/test_unique_counts.py"]
+  },
+  "synthetic-bugfix/range_util": {
+    "kind": "single_file_fixture",
+    "fixtureSource": "fixtures/bugs/range_util_buggy.py",
+    "candidateTargets": ["range_util.py"],
+    "hiddenTests": ["hidden_tests/synthetic_bugfix/test_range_util.py"]
+  },
+  "synthetic-bugfix/pricing_discount": {
+    "kind": "repository_fixture",
+    "fixtureSource": "fixtures/repos/python-inventory",
+    "candidateTargets": ["inventory/pricing.py"],
+    "hiddenTests": []
+  }
+}
