@@ -194,3 +194,133 @@ echo 'ALL EXECUTABLE GRADER FEATURE CHECKS PASSED'
 TEST LOOP 1 GRADER TEST UNTERMINATED
 cd /home/projects/Cortexo && LOG="/tmp/cortexo-grader-check-$(date +%Y%m%d-%H%M%S).log" && bash -c 'set -euo pipefail; echo "=== PYTHON COMPILE ==="; ml/.venv/bin/python -m compileall -q ml/src/cortexo_ml; echo "=== PYTHON TESTS ==="; ml/.venv/bin/python -m pytest -q ml/tests -ra; echo "=== SANDBOX IMAGE ==="; docker build -t cortexo-sandbox:latest sandbox; docker image inspect cortexo-sandbox:latest >/dev/null; echo "=== VUE TYPECHECK ==="; (cd apps/web-vue && npm run typecheck); echo "=== VUE BUILD ==="; (cd apps/web-vue && npm run build); echo "=== SPRING TEST ==="; (cd apps/api-spring && export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64 && export PATH="$JAVA_HOME/bin:$PATH" && mvn test); echo "=== GOLD LEAK CHECK ==="; if grep -R --line-number --include="*.py" '\''patch = task.get("gold_patch")'\'' ml/src/cortexo_ml; then echo "ERROR: gold_patch leakage assignment still exists"; exit 1; else echo "OK: no gold_patch leakage assignment found"; fi; echo "=== SUCCESS ==="; echo "ALL EXECUTABLE GRADER FEATURE CHECKS PASSED"' 2>&1 | tee "$LOG"; RC=${PIPESTATUS[0]}; echo; echo "============================================================"; echo "CHECK EXIT CODE: $RC"; echo "FULL LOG: $LOG"; echo "============================================================"; if [ "$RC" -ne 0 ]; then echo; echo "FAILED - LAST 150 LOG LINES:"; echo "============================================================"; tail -n 150 "$LOG"; else echo "SUCCESS - ALL CHECKS PASSED"; fi
 
+*********************************
+NEW REGRESSION TESTS
+cd /home/projects/Cortexo && \
+ml/.venv/bin/python -m pytest -q ml/tests/test_regression.py -vv
+
+PYTHON ML TESTS
+cd /home/projects/Cortexo && \
+ml/.venv/bin/python -m compileall -q ml/src/cortexo_ml && \
+ml/.venv/bin/python -m pytest -q ml/tests -ra
+
+BUILD SANDBOX
+cd /home/projects/Cortexo && \
+docker build -t cortexo-sandbox:latest sandbox
+docker image inspect cortexo-sandbox:latest >/dev/null && echo 'SANDBOX IMAGE: PASS'
+
+RUN ACTUAL REGRESSION TESTS
+cd /home/projects/Cortexo && \
+make regression
+
+INSPECT GENERATED RESULTS 
+cd /home/projects/Cortexo && \
+find artifacts/evaluations/regression -maxdepth 2 -type f -printf '%TY-%Tm-%Td %TH:%TM:%TS  %p\n' | sort
+IF WRITE JSON 
+cd /home/projects/Cortexo && \
+python3 -m json.tool artifacts/evaluations/regression/latest.json
+CONCISE SUMMARY  
+cd /home/projects/Cortexo && \
+python3 - <<'PY'
+import json
+from pathlib import Path
+
+p = Path("artifacts/evaluations/regression/latest.json")
+
+if not p.exists():
+    raise SystemExit(f"ERROR: {p} does not exist")
+
+r = json.loads(p.read_text())
+
+summary = r.get("summary", {})
+
+print("=" * 60)
+print("CORTEXO REGRESSION RESULT")
+print("=" * 60)
+print("Suite:       ", r.get("suite") or r.get("suiteVersion"))
+print("Git commit:  ", r.get("gitCommit"))
+print("Status:      ", r.get("status"))
+print("Total:       ", summary.get("total"))
+print("Passed:      ", summary.get("passed"))
+print("Failed:      ", summary.get("failed"))
+
+score = summary.get("score")
+if isinstance(score, (int, float)):
+    print("Score:       ", f"{score * 100:.2f}%" if score <= 1 else f"{score:.2f}%")
+else:
+    print("Score:       ", score)
+
+print("=" * 60)
+
+for case in r.get("cases", []):
+    actual = case.get("actualStatus") or case.get("actual")
+    expected = case.get("expectedStatus") or case.get("expected")
+    ok = case.get("passed")
+    print(
+        f"{'PASS' if ok else 'FAIL':4}  "
+        f"{case.get('id', '?'):40} "
+        f"expected={expected} actual={actual}"
+    )
+PY
+
+HARNESS FAIL TESTS 
+cd /home/projects/Cortexo && python3 - <<'PY'
+import json
+from pathlib import Path
+
+p = Path("artifacts/evaluations/regression/latest.json")
+if not p.exists():
+    raise SystemExit(f"ERROR: {p} not found")
+
+r = json.loads(p.read_text(encoding="utf-8"))
+
+print("=" * 100)
+print("DETERMINISTIC HARNESS ERRORS")
+print("=" * 100)
+
+cases = (
+    r.get("deterministicCases")
+    or r.get("deterministic_cases")
+    or r.get("cases")
+    or r.get("deterministic", {}).get("cases")
+    or []
+)
+
+for case in cases:
+    actual = (
+        case.get("actualStatus")
+        or case.get("actual_status")
+        or case.get("actual")
+        or case.get("status")
+    )
+
+    if actual != "HARNESS_ERROR":
+        continue
+
+    print()
+    print("CASE:", case.get("id") or case.get("caseId"))
+    print("EXPECTED:", case.get("expectedStatus") or case.get("expected_status") or case.get("expected"))
+
+    for key in (
+        "error",
+        "errorMessage",
+        "error_message",
+        "exception",
+        "message",
+        "stderr",
+        "details",
+        "graderResult",
+        "grader_result",
+    ):
+        if key in case and case[key] not in (None, "", {}, []):
+            print(f"{key}:")
+            value = case[key]
+            if isinstance(value, (dict, list)):
+                print(json.dumps(value, indent=2))
+            else:
+                print(value)
+
+    print("-" * 100)
+PY
+
+

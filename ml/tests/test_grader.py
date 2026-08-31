@@ -308,3 +308,190 @@ def test_diff_applies_without_shell():
             "@@ -1,2 +1,2 @@\n def merge_dicts(a, b):\n-    return dict(a)\n+    return {**a, **b}\n")
     grader._apply_diff(repo, diff)
     assert "{**a, **b}" in (repo / "src" / "merge.py").read_text(encoding="utf-8")
+
+def test_compile_failure_result_serializes():
+    """Regression: started timestamp must never populate test_stage."""
+    executor = FakeExecutor()
+    executor.set(
+        "COMPILE",
+        ok=True,
+        passed=False,
+        exitCode=1,
+        stderr="compile failed",
+    )
+
+    grader = make_grader(executor)
+    result = grader.grade(micro_task(), GOOD_CODE)
+
+    assert result.status == STATUS_COMPILE_FAIL
+    assert result.test_stage is None
+
+    record = result.to_record()
+    assert record["status"] == STATUS_COMPILE_FAIL
+    assert record["testStage"] is None
+    assert isinstance(record["durationMs"], int)
+
+
+def test_patch_apply_failure_result_serializes():
+    """Regression: failure results must remain safely serializable."""
+    grader = make_grader()
+
+    bad_diff = (
+        "--- a/solution.py\n"
+        "+++ b/solution.py\n"
+        "@@ -1,2 +1,2 @@\n"
+        " this line does not exist\n"
+        "-old\n"
+        "+new\n"
+    )
+
+    result = grader.grade(micro_task(), bad_diff)
+
+    assert result.status == STATUS_PATCH_APPLY_FAIL
+    assert result.test_stage is not None
+
+    record = result.to_record()
+    assert record["status"] == STATUS_PATCH_APPLY_FAIL
+    assert isinstance(record["testStage"], dict)
+    assert isinstance(record["durationMs"], int)
+
+
+def test_compile_failure_result_serializes():
+    """Regression: started timestamp must never populate test_stage."""
+    executor = FakeExecutor()
+    executor.set(
+        "COMPILE",
+        ok=True,
+        passed=False,
+        exitCode=1,
+        stderr="compile failed",
+    )
+
+    grader = make_grader(executor)
+    result = grader.grade(micro_task(), GOOD_CODE)
+
+    assert result.status == STATUS_COMPILE_FAIL
+    assert result.test_stage is None
+
+    record = result.to_record()
+    assert record["status"] == STATUS_COMPILE_FAIL
+    assert record["testStage"] is None
+    assert isinstance(record["durationMs"], int)
+
+
+def test_patch_apply_failure_result_serializes():
+    """Regression: failure results must remain safely serializable."""
+    grader = make_grader()
+
+    bad_diff = (
+        "--- a/solution.py\n"
+        "+++ b/solution.py\n"
+        "@@ -1,2 +1,2 @@\n"
+        " this line does not exist\n"
+        "-old\n"
+        "+new\n"
+    )
+
+    result = grader.grade(micro_task(), bad_diff)
+
+    assert result.status == STATUS_PATCH_APPLY_FAIL
+    assert result.test_stage is not None
+
+    record = result.to_record()
+    assert record["status"] == STATUS_PATCH_APPLY_FAIL
+    assert isinstance(record["testStage"], dict)
+    assert isinstance(record["durationMs"], int)
+
+
+def test_compile_failure_result_serializes():
+    """Regression: started timestamp must never populate test_stage."""
+    executor = FakeExecutor()
+    executor.set(
+        "COMPILE",
+        ok=True,
+        passed=False,
+        exitCode=1,
+        stderr="compile failed",
+    )
+
+    grader = make_grader(executor)
+    result = grader.grade(micro_task(), GOOD_CODE)
+
+    assert result.status == STATUS_COMPILE_FAIL
+    assert result.test_stage is None
+
+    record = result.to_record()
+    assert record["status"] == STATUS_COMPILE_FAIL
+    assert record["testStage"] is None
+    assert isinstance(record["durationMs"], int)
+
+
+def test_patch_apply_failure_result_serializes():
+    """Regression: failure results must remain safely serializable."""
+    grader = make_grader()
+
+    bad_diff = (
+        "--- a/solution.py\n"
+        "+++ b/solution.py\n"
+        "@@ -1,2 +1,2 @@\n"
+        " this line does not exist\n"
+        "-old\n"
+        "+new\n"
+    )
+
+    result = grader.grade(micro_task(), bad_diff)
+
+    assert result.status == STATUS_PATCH_APPLY_FAIL
+    assert result.test_stage is not None
+
+    record = result.to_record()
+    assert record["status"] == STATUS_PATCH_APPLY_FAIL
+    assert isinstance(record["testStage"], dict)
+    assert isinstance(record["durationMs"], int)
+
+
+def test_compile_failure_result_serializes():
+    """Regression: started timestamp must never populate test_stage."""
+    executor = FakeExecutor()
+    executor.set(
+        "COMPILE",
+        ok=True,
+        passed=False,
+        exitCode=1,
+        stderr="compile failed",
+    )
+
+    grader = make_grader(executor)
+    result = grader.grade(micro_task(), GOOD_CODE)
+
+    assert result.status == STATUS_COMPILE_FAIL
+    assert result.test_stage is None
+
+    record = result.to_record()
+    assert record["status"] == STATUS_COMPILE_FAIL
+    assert record["testStage"] is None
+    assert isinstance(record["durationMs"], int)
+
+
+def test_patch_apply_failure_result_serializes():
+    """Regression: failure results must remain safely serializable."""
+    grader = make_grader()
+
+    bad_diff = (
+        "--- a/solution.py\n"
+        "+++ b/solution.py\n"
+        "@@ -1,2 +1,2 @@\n"
+        " this line does not exist\n"
+        "-old\n"
+        "+new\n"
+    )
+
+    result = grader.grade(micro_task(), bad_diff)
+
+    assert result.status == STATUS_PATCH_APPLY_FAIL
+    assert result.test_stage is not None
+
+    record = result.to_record()
+    assert record["status"] == STATUS_PATCH_APPLY_FAIL
+    assert isinstance(record["testStage"], dict)
+    assert isinstance(record["durationMs"], int)

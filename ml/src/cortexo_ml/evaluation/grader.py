@@ -323,18 +323,44 @@ class ExecutableGrader:
                     candidate_content = candidate.content
                 self._apply_diff(workspace, candidate_content)
             except CandidateExtractionError as exc:
-                return self._result(False, STATUS_CANDIDATE_INVALID, candidate, changed_files, 0, None, started,
-                                    patch_applied=False, message=str(exc))
+                return self._result(
+                    False,
+                    STATUS_CANDIDATE_INVALID,
+                    candidate,
+                    changed_files,
+                    0,
+                    None,
+                    started=started,
+                    patch_applied=False,
+                    message=str(exc),
+                )
             except PatchApplyFailure as exc:
-                return self._result(False, STATUS_PATCH_APPLY_FAIL, candidate, list(changed), 0, None, started,
-                                    patch_applied=False, message=str(exc))
+                return self._result(
+                    False,
+                    STATUS_PATCH_APPLY_FAIL,
+                    candidate,
+                    list(changed),
+                    0,
+                    None,
+                    started=started,
+                    patch_applied=False,
+                    message=str(exc),
+                )
             changed_files = list(changed)
             changed_lines = count_changed_lines_in_diff(candidate.content)
             patch_applied = True
         else:
             if len(targets) != 1:
-                return self._result(False, STATUS_CANDIDATE_INVALID, candidate, [], 0, None, started,
-                                    message="full-file candidate requires exactly one candidate target")
+                return self._result(
+                    False,
+                    STATUS_CANDIDATE_INVALID,
+                    candidate,
+                    [],
+                    0,
+                    None,
+                    started=started,
+                    message="full-file candidate requires exactly one candidate target",
+                )
             target = targets[0]
             original = (workspace / target).read_text(encoding="utf-8") if (workspace / target).exists() else ""
             (workspace / target).write_text(candidate.content, encoding="utf-8")
@@ -346,38 +372,113 @@ class ExecutableGrader:
 
         compile_stage = self._run_stage("COMPILE", language, workspace, timeout_seconds)
         if compile_stage.timed_out:
-            return self._result(False, STATUS_TIMEOUT, candidate, changed_files, changed_lines,
-                                compile_stage, started, patch_applied=patch_applied)
+            return self._result(
+                False,
+                STATUS_TIMEOUT,
+                candidate,
+                changed_files,
+                changed_lines,
+                compile_stage,
+                started=started,
+                patch_applied=patch_applied,
+            )
         if compile_stage.policy_violation:
-            return self._result(False, STATUS_POLICY, candidate, changed_files, changed_lines,
-                                compile_stage, started, patch_applied=patch_applied)
+            return self._result(
+                False,
+                STATUS_POLICY,
+                candidate,
+                changed_files,
+                changed_lines,
+                compile_stage,
+                started=started,
+                patch_applied=patch_applied,
+            )
         if not compile_stage.passed:
-            return self._result(False, STATUS_COMPILE_FAIL, candidate, changed_files, changed_lines,
-                                compile_stage, started, patch_applied=patch_applied)
+            return self._result(
+                False,
+                STATUS_COMPILE_FAIL,
+                candidate,
+                changed_files,
+                changed_lines,
+                compile_stage,
+                started=started,
+                patch_applied=patch_applied,
+            )
 
         test_stage = self._run_stage("TEST", language, workspace, timeout_seconds)
         if test_stage.timed_out:
-            return self._result(False, STATUS_TIMEOUT, candidate, changed_files, changed_lines,
-                                compile_stage, test_stage, started, patch_applied=patch_applied)
+            return self._result(
+                False,
+                STATUS_TIMEOUT,
+                candidate,
+                changed_files,
+                changed_lines,
+                compile_stage,
+                test_stage=test_stage,
+                started=started,
+                patch_applied=patch_applied,
+            )
         if test_stage.policy_violation:
-            return self._result(False, STATUS_POLICY, candidate, changed_files, changed_lines,
-                                compile_stage, test_stage, started, patch_applied=patch_applied)
+            return self._result(
+                False,
+                STATUS_POLICY,
+                candidate,
+                changed_files,
+                changed_lines,
+                compile_stage,
+                test_stage=test_stage,
+                started=started,
+                patch_applied=patch_applied,
+            )
 
         summary = parse_pytest_summary(test_stage.stdout + "\n" + test_stage.stderr)
         if summary.collected_count == 0:
-            return self._result(False, STATUS_NO_TESTS, candidate, changed_files, changed_lines,
-                                compile_stage, test_stage, started, patch_applied=patch_applied, summary=summary)
+            return self._result(
+                False,
+                STATUS_NO_TESTS,
+                candidate,
+                changed_files,
+                changed_lines,
+                compile_stage,
+                test_stage=test_stage,
+                started=started,
+                patch_applied=patch_applied,
+                summary=summary,
+            )
         if test_stage.passed:
             status = STATUS_PASS
             passed = True
         else:
             status = STATUS_TEST_FAIL
             passed = False
-        return self._result(passed, status, candidate, changed_files, changed_lines,
-                            compile_stage, test_stage, started, patch_applied=patch_applied, summary=summary)
+        return self._result(
+            passed,
+            status,
+            candidate,
+            changed_files,
+            changed_lines,
+            compile_stage,
+            test_stage=test_stage,
+            started=started,
+            patch_applied=patch_applied,
+            summary=summary,
+        )
 
-    def _result(self, passed, status, candidate, changed_files, changed_lines, compile_stage,
-                test_stage=None, started=None, patch_applied=False, summary=None, message: str | None = None):
+    def _result(
+        self,
+        passed,
+        status,
+        candidate,
+        changed_files,
+        changed_lines,
+        compile_stage,
+        *,
+        test_stage=None,
+        started=None,
+        patch_applied=False,
+        summary=None,
+        message: str | None = None,
+    ):
         duration = int((time.monotonic() - started) * 1000) if started is not None else 0
         if message and test_stage is None:
             test_stage = self._policy_stage_from_error(message)
